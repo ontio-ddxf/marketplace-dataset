@@ -31,7 +31,7 @@ dataset是一个数据集合，数据提供方可以插入数据到搜索引擎�
 
 ```
 url：/api/v1/dataset
-method：POST
+method：PUT
 ```
 
 请求：

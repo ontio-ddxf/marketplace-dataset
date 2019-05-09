@@ -120,7 +120,7 @@ public class DatasetController {
             boolQuery.must(queryBuilder);
             i++;
         }
-        EsPage list = ElasticsearchUtil.searchDataPage(indexName, esType, pageIndex, pageSize, boolQuery, null, null, null);
+        EsPage list = ElasticsearchUtil.searchDataPage(indexName, esType, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
         return new Result(0, "SUCCESS", list);
     }
 
