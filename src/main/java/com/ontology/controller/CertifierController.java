@@ -49,7 +49,7 @@ public class CertifierController {
         return new Result(0, "SUCCESS", certificationList);
     }
 
-    @ApiOperation(value = "认证人获取待认证列表", notes = "认证人获取待认证列表", httpMethod = "GET")
+    @ApiOperation(value = "认证数据", notes = "认证数据", httpMethod = "POST")
     @PostMapping
     public Result certificate(@RequestBody CertificationVo req) {
         Map<String, Object> map = ElasticsearchUtil.searchDataById(indexName, esType, req.getId(), null);
