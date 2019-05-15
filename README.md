@@ -1,9 +1,13 @@
 * 1. [Restful Api 需求](#RestfulApi)
-* 2. [Restful接口规范](#Restful)
+* 2. [商品接口](#商品接口)
 	* 2.1. [插入或根据id更新数据到ElasticSearch](#ElasticSearch-1)
 	* 2.2. [查询数据，分页返回](#)
 	* 2.3. [根据ID返回数据](#ID)
 	* 2.4. [权限](#-1)
+* 3. [认证接口](#认证接口)
+	* 3.1. [获取认证方列表](#获取认证方列表)
+* 4. [仲裁接口](#仲裁接口)
+	* 4.1. [获取仲裁方列表](#获取仲裁方列表)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -25,7 +29,7 @@ dataset是一个数据集合，数据提供方可以插入数据到搜索引擎�
 2. 根据Tag查询并分页展示。
 3. 根据ID查询数据详细信息。
 
-##  2. <a name='Restful'></a>Restful接口规范
+## 商品接口
 
 ###  2.1. <a name='ElasticSearch-1'></a>插入或根据id更新数据到ElasticSearch
 
@@ -183,3 +187,59 @@ method:Get
 ###  2.4. <a name='-1'></a>权限
 
 目前Restful API没有设计权限系统，由使用代码的第三方自己实现
+
+## 认证接口
+
+###  获取认证方列表
+```
+url：/api/v1/certifier
+method：GET
+```
+
+响应：
+
+```source-json
+{
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": [
+        {
+            "id": "1",
+            "ontid": "did:ont:AcdBfqe7SG8xn4wfGrtUbbBDxw2x1e8UKm"
+        }
+    ]
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回数据认证方列表，失败返回"" |
+
+## 仲裁接口
+
+###  获取仲裁方列表
+```
+url：/api/v1/judger
+method：GET
+```
+
+响应：
+
+```source-json
+{
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": [
+        {
+            "id": "1",
+            "ontid": "did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"
+        }
+    ]
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回数据仲裁方列表，失败返回"" |

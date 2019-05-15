@@ -9,6 +9,8 @@ import java.util.List;
 public class QueryVo {
     @ApiModelProperty(name="text",value = "text")
     private String text;
+    @ApiModelProperty(name="columnIndex",value = "columnIndex")
+    private int columnIndex;
     @ApiModelProperty(name="percent",value = "percent")
     private int percent;
 

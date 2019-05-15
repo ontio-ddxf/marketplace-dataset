@@ -1,6 +1,9 @@
 package com.ontology.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
+import com.ontology.controller.vo.DataVo;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
@@ -197,13 +200,20 @@ public class ElasticsearchUtil {
         GetResponse getResponse = getRequestBuilder.execute().actionGet();
         Map<String, Object> source = getResponse.getSource();
         if (source != null) {
-            List<String> tagValue = new ArrayList<>();
-            for (Map.Entry<String, Object> entry : source.entrySet()) {
-                if (entry.getKey().startsWith("tag") && StringUtils.isNotEmpty((String) entry.getValue())) {
-                    tagValue.add((String) entry.getValue());
+            int size = source.size();
+            for (int i = 0; i< size; i++) {
+                if (!source.containsKey("column"+i)) {
+                    break;
+                } else {
+                    source.remove("column"+i);
                 }
             }
-            source.put("tagValue",tagValue);
+            if (source.containsKey("data")) {
+                String dataString = (String) source.get("data");
+                JSONObject dataJson = JSONObject.parseObject(dataString);
+                DataVo dataVo = JSON.toJavaObject(dataJson, DataVo.class);
+                source.put("data",dataVo);
+            }
         }
         return source;
     }
@@ -338,7 +348,7 @@ public class ElasticsearchUtil {
 
         if (searchResponse.status().getStatus() == 200) {
             // 解析对象
-            return setSearchResponse(searchResponse, highlightField);
+            return setSourceResult(searchResponse, highlightField);
         }
         return null;
 
@@ -399,13 +409,20 @@ public class ElasticsearchUtil {
                 }
             }
 
-            List<String> tagValue = new ArrayList<>();
-            for (Map.Entry<String, Object> entry : source.entrySet()) {
-                if (entry.getKey().startsWith("tag") && StringUtils.isNotEmpty((String) entry.getValue())) {
-                    tagValue.add((String) entry.getValue());
+            int size = source.size();
+            for (int i = 0; i< size; i++) {
+                if (!source.containsKey("column"+i)) {
+                    break;
+                } else {
+                    source.remove("column"+i);
                 }
             }
-            source.put("tagValue",tagValue);
+            if (source.containsKey("data")) {
+                String dataString = (String) source.get("data");
+                JSONObject dataJson = JSONObject.parseObject(dataString);
+                DataVo dataVo = JSON.toJavaObject(dataJson, DataVo.class);
+                source.put("data",dataVo);
+            }
             sourceList.add(source);
         }
 
