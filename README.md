@@ -4,7 +4,8 @@
 	* 2.2. [查询数据，分页返回](#)
 	* 2.3. [根据ID返回数据](#ID)
 	* 2.4. [根据卖家ontid返回数据](#根据卖家ontid返回数据)
-	* 2.5. [权限](#-1)
+	* 2.5. [卖家数据撤单](#卖家数据撤单)
+	* 2.6. [权限](#-1)
 * 3. [认证接口](#认证接口)
 	* 3.1. [获取认证方列表](#获取认证方列表)
 	* 3.2. [认证人获取待认证列表](#认证人获取待认证列表)
@@ -260,7 +261,32 @@ method：GET
 | result | List | 成功返回数据列表，失败返回"" |
 
 
-###  2.5. <a name='-1'></a>权限
+###卖家数据撤单
+```
+url：/api/v1/dataset/{id}
+method：POST
+```
+| Field Name | Type | Description |
+|---|---|---|
+|id|String|数据id|
+
+响应：
+
+```source-json
+{
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": "SUCCESS"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | String | 成功返回"SUCCESS"，失败返回"" |
+
+
+###  2.6. <a name='-1'></a>权限
 
 目前Restful API没有设计权限系统，由使用代码的第三方自己实现
 

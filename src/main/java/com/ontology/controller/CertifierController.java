@@ -43,9 +43,14 @@ public class CertifierController {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         MatchQueryBuilder queryCertifier = QueryBuilders.matchQuery("certifier", certifier);
         MatchQueryBuilder queryIsCertificated = QueryBuilders.matchQuery("isCertificated", 0);
+        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 1);
         boolQuery.must(queryCertifier);
         boolQuery.must(queryIsCertificated);
+        boolQuery.must(queryState);
         List<Map<String, Object>> certificationList = ElasticsearchUtil.searchListData(indexName, esType, boolQuery, null, null, null, null);
+        for (Map<String, Object> result:certificationList) {
+            ElasticsearchUtil.formatResult(result);
+        }
         return new Result(0, "SUCCESS", certificationList);
     }
 
@@ -59,9 +64,8 @@ public class CertifierController {
         if (!map.get("certifier").equals(req.getCertifier())) {
             return new Result(500, "NO_PERMISSION", "");
         }
-        Map<String, Object> cert = new HashMap<>();
-        cert.put("isCertificated", 1);
-        ElasticsearchUtil.updateDataById(cert, indexName, esType, req.getId());
+        map.put("isCertificated", 1);
+        ElasticsearchUtil.updateDataById(map, indexName, esType, req.getId());
         return new Result(0, "SUCCESS", "SUCCESS");
     }
 }

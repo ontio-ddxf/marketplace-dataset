@@ -1,6 +1,7 @@
 package com.ontology.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
 import com.ontology.controller.vo.AttributeVo;
@@ -80,6 +81,7 @@ public class DatasetController {
         }
             if (exist == null) {
                 // 新增数据
+                obj.put("state",1);
                 ElasticsearchUtil.addData(obj, indexName, esType, id);
             } else {
                 // 旧数据的tag数
@@ -122,7 +124,15 @@ public class DatasetController {
             MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("column" + vo.getColumnIndex(), vo.getText()).minimumShouldMatch(vo.getPercent() + "%");
             boolQuery.must(queryBuilder);
         }
+        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 1);
+        boolQuery.must(queryState);
         EsPage list = ElasticsearchUtil.searchDataPage(indexName, esType, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
+
+        List<Map<String, Object>> recordList = list.getRecordList();
+        for (Map<String, Object> result : recordList) {
+            ElasticsearchUtil.formatResult(result);
+        }
+
         return new Result(0, "SUCCESS", list);
     }
 
@@ -130,8 +140,10 @@ public class DatasetController {
     @GetMapping("/{id}")
     public Result getData(@PathVariable String id) {
         Map<String, Object> result = ElasticsearchUtil.searchDataById(indexName, esType, id, null);
+        ElasticsearchUtil.formatResult(result);
         return new Result(0, "SUCCESS", result);
     }
+
 
     @ApiOperation(value = "根据卖家ontid查询数据", notes = "根据卖家ontid查询数据", httpMethod = "GET")
     @GetMapping("/provider/{ontid}")
@@ -140,7 +152,29 @@ public class DatasetController {
         MatchQueryBuilder queryProvider = QueryBuilders.matchQuery("ontid", ontid);
         boolQuery.must(queryProvider);
         List<Map<String, Object>> result = ElasticsearchUtil.searchListData(indexName, esType, boolQuery, null, null, null, null);
+        for (Map<String, Object> map : result) {
+            ElasticsearchUtil.formatResult(map);
+        }
         return new Result(0, "SUCCESS", result);
+    }
+
+    @ApiOperation(value = "上架/下架", notes = "上架/下架", httpMethod = "POST")
+    @PostMapping("/{id}")
+    public Result deleteData(@PathVariable String id) {
+        Map<String, Object> map = ElasticsearchUtil.searchDataById(indexName, esType, id, null);
+        if (map == null) {
+            return new Result(500, "NOT_FOUND", "");
+        }
+        if ((int)map.get("state")==0) {
+            map.put("state", 1);
+        } else if ((int)map.get("state")==1) {
+            map.put("state",0);
+        } else {
+            return new Result(500, "STATE_NOT_FOUND", "");
+        }
+
+        ElasticsearchUtil.updateDataById(map,indexName,esType,id);
+        return new Result(0, "SUCCESS", "SUCCESS");
     }
 
 }

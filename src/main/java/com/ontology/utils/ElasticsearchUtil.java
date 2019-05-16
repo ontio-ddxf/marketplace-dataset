@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.controller.vo.DataVo;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -15,8 +16,10 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -33,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @Author: LX
@@ -174,9 +178,8 @@ public class ElasticsearchUtil {
 
         UpdateRequest updateRequest = new UpdateRequest();
 
-        updateRequest.index(index).type(type).id(id).doc(obj);
-
-        client.update(updateRequest);
+        updateRequest.index(index).type(type).id(id).doc(obj).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        client.update(updateRequest).actionGet();
 
     }
 
@@ -199,22 +202,6 @@ public class ElasticsearchUtil {
 
         GetResponse getResponse = getRequestBuilder.execute().actionGet();
         Map<String, Object> source = getResponse.getSource();
-        if (source != null) {
-            int size = source.size();
-            for (int i = 0; i< size; i++) {
-                if (!source.containsKey("column"+i)) {
-                    break;
-                } else {
-                    source.remove("column"+i);
-                }
-            }
-            if (source.containsKey("data")) {
-                String dataString = (String) source.get("data");
-                JSONObject dataJson = JSONObject.parseObject(dataString);
-                DataVo dataVo = JSON.toJavaObject(dataJson, DataVo.class);
-                source.put("data",dataVo);
-            }
-        }
         return source;
     }
 
@@ -409,24 +396,33 @@ public class ElasticsearchUtil {
                 }
             }
 
-            int size = source.size();
-            for (int i = 0; i< size; i++) {
-                if (!source.containsKey("column"+i)) {
-                    break;
-                } else {
-                    source.remove("column"+i);
-                }
-            }
-            if (source.containsKey("data")) {
-                String dataString = (String) source.get("data");
-                JSONObject dataJson = JSONObject.parseObject(dataString);
-                DataVo dataVo = JSON.toJavaObject(dataJson, DataVo.class);
-                source.put("data",dataVo);
-            }
             sourceList.add(source);
         }
 
         return sourceList;
+    }
+
+    /**
+     * 针对ddxf的结果集格式化
+     * @param result
+     */
+    public static void formatResult(Map<String, Object> result) {
+        if (result != null) {
+            int size = result.size();
+            for (int i = 0; i< size; i++) {
+                if (!result.containsKey("column"+i)) {
+                    break;
+                } else {
+                    result.remove("column"+i);
+                }
+            }
+            if (result.containsKey("data")) {
+                String dataString = (String) result.get("data");
+                JSONObject dataJson = JSONObject.parseObject(dataString);
+                DataVo dataVo = JSON.toJavaObject(dataJson, DataVo.class);
+                result.put("data",dataVo);
+            }
+        }
     }
 
 }
