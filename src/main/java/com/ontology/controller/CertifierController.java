@@ -43,7 +43,7 @@ public class CertifierController {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         MatchQueryBuilder queryCertifier = QueryBuilders.matchQuery("certifier", certifier);
         MatchQueryBuilder queryIsCertificated = QueryBuilders.matchQuery("isCertificated", 0);
-        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 1);
+        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 0);
         boolQuery.must(queryCertifier);
         boolQuery.must(queryIsCertificated);
         boolQuery.must(queryState);
