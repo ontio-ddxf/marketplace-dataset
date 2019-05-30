@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,10 @@ public class SpringbootApplicationTests {
 
 	@Test
 	public void contextLoads() {
+		String expireTime = JSON.toJSONStringWithDateFormat(new Date(),"yyyy-MM-dd HH:mm:ss");
+		log.info("{}",expireTime);
+		Date expireDate = JSON.parseObject(expireTime, Date.class);
+		log.info("{}",expireDate);
 	}
 
 	@Test
