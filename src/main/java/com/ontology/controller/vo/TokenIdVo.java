@@ -9,6 +9,8 @@ public class TokenIdVo {
     private String id;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String dataId;
-    @ApiModelProperty(name="sigVo",value = "购买交易签名信息")
-    private SigVo sigVo;
+    @ApiModelProperty(name="sigVo",value = "注册DataId签名")
+    private SigVo sigDataVo;
+    @ApiModelProperty(name="sigVo",value = "生成dToken签名")
+    private SigVo sigTokenVo;
 }

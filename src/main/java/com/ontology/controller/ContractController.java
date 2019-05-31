@@ -11,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Api(tags = "合约调用接口")
 @RestController
 @RequestMapping("/api/v1/data-dealer/contract")
@@ -37,12 +39,12 @@ public class ContractController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 
-    @ApiOperation(value="发送交易", notes="发送交易" ,httpMethod="POST")
+    @ApiOperation(value="注册dataId和tokenId", notes="注册dataId和tokenId" ,httpMethod="POST")
     @RequestMapping(value = "/dataid", method = RequestMethod.POST)
     public Result dataid(@RequestBody DataIdVo dataIdVo) throws Exception {
         String action = "dataid";
-        String txHash = contractService.registerDataId(action,dataIdVo);
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+        List<String> txHex = contractService.registerDataId(action,dataIdVo);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHex);
     }
 
 }

@@ -2,6 +2,7 @@ package com.ontology.service.impl;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.ontology.bean.EsPage;
 import com.ontology.controller.vo.*;
 import com.ontology.exception.MarketplaceException;
@@ -104,6 +105,12 @@ public class OrderServiceImpl implements OrderService {
         try {
             // 根据id查询数据是否存在
             EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
+
+            List<Map<String, Object>> recordList = esPage.getRecordList();
+            for (Map<String, Object> result : recordList) {
+                JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
+                result.put("judger", judger);
+            }
             return esPage;
         } catch (IndexNotFoundException e) {
             ElasticsearchUtil.createIndex(Constant.ES_INDEX_ORDER);

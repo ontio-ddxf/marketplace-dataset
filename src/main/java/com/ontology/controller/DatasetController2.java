@@ -2,14 +2,13 @@ package com.ontology.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 import com.ontology.exception.MarketplaceException;
 import com.ontology.service.ContractService;
-import com.ontology.utils.Constant;
-import com.ontology.utils.ElasticsearchUtil;
-import com.ontology.utils.ErrorInfo;
+import com.ontology.utils.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +29,10 @@ import java.util.*;
 public class DatasetController2 {
     @Autowired
     private ContractService contractService;
+    @Autowired
+    private SDKUtil sdkUtil;
+    @Autowired
+    private ConfigParam configParam;
 
     /**
      * 新增或更新数据
@@ -178,16 +181,55 @@ public class DatasetController2 {
     @PostMapping("/tokenId")
     public Result createDataIdAndTokenId(@RequestBody TokenIdVo req) {
         String action = "createDataIdAndTokenId";
+
+        String id = req.getId();
+        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        Object dataId = data.get("dataId");
+        if (!"".equals(dataId)) {
+            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
+        }
         try {
-            String txHash = contractService.sendTransaction(action, req.getSigVo());
+            // 发送交易
+            String dataIdTxHash = contractService.sendTransaction(action, req.getSigDataVo());
+            String tokenIdTxHash = contractService.sendTransaction(action, req.getSigTokenVo());
+            List<String> txHashList = new ArrayList<>();
+            txHashList.add(dataIdTxHash);
+            txHashList.add(tokenIdTxHash);
+            // 本地存储
             Map<String,Object> dataset = new HashMap<>();
             dataset.put("dataId",req.getDataId());
-            ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET,req.getId());
-            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), txHash);
+            dataset.put("state",1);
+            ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET, id);
+            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), txHashList);
         } catch (Exception e) {
             e.printStackTrace();
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
         }
     }
+
+    @ApiOperation(value = "查询token余额", notes = "查询token余额", httpMethod = "GET")
+    @GetMapping("/token/balance/{address}/{tokenId}")
+    public Result getBalanceOfToken(@PathVariable String address,@PathVariable Long tokenId) {
+        String action = "getBalanceOfToken";
+        Map<String,Object> arg0 = new HashMap<>();
+        arg0.put("name","account");
+        arg0.put("value","Address:"+address);
+        Map<String,Object> arg1 = new HashMap<>();
+        arg1.put("name","tokenId");
+        arg1.put("value",tokenId);
+        List<Map<String,Object>> argList = new ArrayList<>();
+        argList.add(arg0);
+        argList.add(arg1);
+        String params = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "balanceOf", argList, configParam.PAYER_ADDRESS);
+        try {
+            JSONObject jsonObject = (JSONObject) sdkUtil.invokeContract(params, null, null, true);
+            int balance = Integer.parseInt(com.github.ontio.common.Helper.reverse(jsonObject.getString("Result")), 16);
+            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), balance);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 }

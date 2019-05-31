@@ -16,5 +16,8 @@ public class ConfigParam {
 	@Value("${payer.addr}")
 	public String PAYER_ADDRESS;
 
+	@Value("${contract.hash.dtoken}")
+	public String CONTRACT_HASH_DTOKEN;
+
 
 }

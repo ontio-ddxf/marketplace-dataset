@@ -38,7 +38,8 @@ public class SDKUtil {
     ConfigParam param;
     @Autowired
     SecureConfig secureConfig;
-
+    @Autowired
+    private ConfigParam configParam;
 
     public Map<String, String> createOntId(String pwd) throws Exception {
         OntSdk ontSdk = getOntSdk();
@@ -144,13 +145,13 @@ public class SDKUtil {
     public Object invokeContract(String str, Account acct,Account payerAcct, boolean preExec) throws Exception{
         OntSdk ontSdk = getOntSdk();
         Transaction[] txs1 = ontSdk.makeTransactionByJson(str);
-        ontSdk.addSign(txs1[0], acct);
-        ontSdk.addSign(txs1[0], payerAcct);
         Object result = null;
         if(preExec) {
             result = ontSdk.getConnect().sendRawTransactionPreExec(txs1[0].toHexString());
             return result;
         }else {
+            ontSdk.addSign(txs1[0], acct);
+            ontSdk.addSign(txs1[0], payerAcct);
             result = ontSdk.getConnect().sendRawTransaction(txs1[0].toHexString());
         }
         return txs1[0].hash().toString();
@@ -221,7 +222,7 @@ public class SDKUtil {
         List list = new ArrayList();
         list.add(new Struct().add(dataId,ontid,pubKey));
         arg = NativeBuildParams.createCodeParamsScript(list);
-        Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes("0000000000000000000000000000000000000003")),"regIDWithController",arg,secureConfig.getPayerAddr(),20000,0);
+        Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes("0000000000000000000000000000000000000003")),"regIDWithController",arg,configParam.PAYER_ADDRESS,20000,0);
         return tx.toHexString();
     }
 

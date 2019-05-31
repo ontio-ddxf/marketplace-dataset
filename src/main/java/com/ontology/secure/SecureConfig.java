@@ -21,8 +21,6 @@ public class SecureConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecureConfig.class);
 
-    private static String CONTRACT_HASH;
-
 
     private static String PAYER_ADDR;
     @Value("${payer.addr}")

@@ -7,12 +7,14 @@ import com.ontology.controller.vo.DataIdVo;
 import com.ontology.controller.vo.SigVo;
 import com.ontology.secure.SecureConfig;
 import com.ontology.service.ContractService;
+import com.ontology.utils.ConfigParam;
 import com.ontology.utils.Helper;
 import com.ontology.utils.SDKUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -23,14 +25,14 @@ public class ContractServiceImpl implements ContractService {
     @Autowired
     private SDKUtil sdk;
     @Autowired
-    private SecureConfig secureConfig;
+    private ConfigParam configParam;
 
     @Override
     public String makeTransaction(String action, ContractVo contractVo) throws Exception {
         String method = contractVo.getMethod();
         String contractHash = contractVo.getContractHash();
         List argsList = contractVo.getArgsList();
-        String payerAddr = secureConfig.getPayerAddr();
+        String payerAddr = configParam.PAYER_ADDRESS;
         String params = Helper.getParams("", contractHash, method, argsList, payerAddr);
         String txHex = (String) sdk.makeTransaction(params);
         log.info("txHex:{}",txHex);
@@ -44,9 +46,19 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public String registerDataId(String action, DataIdVo dataIdVo) throws Exception {
-        String txHash = sdk.makeRegIdWithController(dataIdVo.getDataId(), dataIdVo.getOntid(), dataIdVo.getPubKey());
-        return txHash;
+    public List<String> registerDataId(String action, DataIdVo dataIdVo) throws Exception {
+        String dataIdTxHex = sdk.makeRegIdWithController(dataIdVo.getDataId(), dataIdVo.getOntid(), dataIdVo.getPubKey());
+        ContractVo contractVo = dataIdVo.getContractVo();
+        String method = contractVo.getMethod();
+        String contractHash = contractVo.getContractHash();
+        List argsList = contractVo.getArgsList();
+        String payerAddr = configParam.PAYER_ADDRESS;
+        String params = Helper.getParams("", contractHash, method, argsList, payerAddr);
+        String tokenIdTxHex = (String) sdk.makeTransaction(params);
+        List<String> txList = new ArrayList<>();
+        txList.add(dataIdTxHex);
+        txList.add(tokenIdTxHex);
+        return txList;
     }
 
 }
