@@ -59,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
             order.put("demanderOntid","");
             order.put("tokenHash",tokenHash);
             order.put("price",price);
+//            order.put("amount",10);
             order.put("judger",JSON.toJSONString(ojList));
             // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
             // 对应显示：1-挂单中；2-正在出售；3-购买中；4-购买成功；5-确认中；6-已确认
@@ -83,7 +84,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public EsPage getAllOrder(String action, PageQueryVo req) {
-        Integer pageIndex = req.getPageIndex();
+        Integer pageNum = req.getPageNum();
         Integer pageSize = req.getPageSize();
         List<QueryVo> queryParams = req.getQueryParams();
 
@@ -104,7 +105,7 @@ public class OrderServiceImpl implements OrderService {
         boolQuery.must(queryState);
         try {
             // 根据id查询数据是否存在
-            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
 
             List<Map<String, Object>> recordList = esPage.getRecordList();
             for (Map<String, Object> result : recordList) {
@@ -120,7 +121,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public EsPage findSelfOrder(String action, SelfOrderVo req) {
-        Integer pageIndex = req.getPageIndex();
+        Integer pageNum = req.getPageNum();
         Integer pageSize = req.getPageSize();
         Integer type = req.getType();
         String ontid = req.getOntid();
@@ -135,7 +136,7 @@ public class OrderServiceImpl implements OrderService {
             queryType = QueryBuilders.matchQuery("providerOntid", ontid);
         }
         boolQuery.must(queryType);
-        EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
+        EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
         // 判断订单是否超时:1-超时；2-未超时
         List<Map<String, Object>> recordList = esPage.getRecordList();
         for (Map<String, Object> order : recordList) {

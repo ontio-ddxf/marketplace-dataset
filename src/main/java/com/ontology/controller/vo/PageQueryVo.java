@@ -8,9 +8,9 @@ import java.util.List;
 
 @Data
 public class PageQueryVo {
-    @ApiModelProperty(name="pageIndex",value = "pageIndex")
+    @ApiModelProperty(name="pageNum",value = "pageNum")
     @NotNull
-    private Integer pageIndex;
+    private Integer pageNum;
     @ApiModelProperty(name="pageSize",value = "pageSize")
     @NotNull
     private Integer pageSize;

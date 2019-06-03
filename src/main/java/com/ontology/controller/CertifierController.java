@@ -1,9 +1,11 @@
 package com.ontology.controller;
 
+import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
 import com.ontology.controller.vo.CertificationVo;
 import com.ontology.entity.Certifier;
 import com.ontology.service.CertifierService;
+import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +42,7 @@ public class CertifierController {
 
     @ApiOperation(value = "认证人获取待认证列表", notes = "认证人获取待认证列表", httpMethod = "GET")
     @GetMapping("/{certifier}")
-    public Result getToBeCertificated(@PathVariable String certifier) {
+    public Result getToBeCertificated(@PathVariable String certifier,@RequestParam Integer pageNum, @RequestParam Integer pageSize) {
         String action = "getToBeCertificated";
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         MatchQueryBuilder queryCertifier = QueryBuilders.matchQuery("certifier", certifier);
@@ -49,11 +51,12 @@ public class CertifierController {
         boolQuery.must(queryCertifier);
         boolQuery.must(queryIsCertificated);
         boolQuery.must(queryState);
-        List<Map<String, Object>> certificationList = ElasticsearchUtil.searchListData(indexName, esType, boolQuery, null, null, null, null);
+        EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+        List<Map<String, Object>> certificationList = esPage.getRecordList();
         for (Map<String, Object> result:certificationList) {
             ElasticsearchUtil.formatResult(result);
         }
-        return new Result(action,0, "SUCCESS", certificationList);
+        return new Result(action,0, "SUCCESS", esPage);
     }
 
     @ApiOperation(value = "认证数据", notes = "认证数据", httpMethod = "POST")

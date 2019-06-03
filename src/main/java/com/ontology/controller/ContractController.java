@@ -15,7 +15,7 @@ import java.util.List;
 
 @Api(tags = "合约调用接口")
 @RestController
-@RequestMapping("/api/v1/data-dealer/contract")
+@RequestMapping("/api/v1/contract")
 @CrossOrigin
 public class ContractController {
 
@@ -24,7 +24,7 @@ public class ContractController {
 
 
     @ApiOperation(value="构造交易", notes="构造交易" ,httpMethod="POST")
-    @RequestMapping(value = "/transaction", method = RequestMethod.POST)
+    @PostMapping(value = "/transaction")
     public Result makeTransaction(@RequestBody ContractVo contractVo) throws Exception {
         String action = "makeTransaction";
         String txHex = contractService.makeTransaction(action,contractVo);
@@ -32,7 +32,7 @@ public class ContractController {
     }
 
     @ApiOperation(value="发送交易", notes="发送交易" ,httpMethod="POST")
-    @RequestMapping(value = "/send", method = RequestMethod.POST)
+    @PostMapping(value = "/send")
     public Result sendTransaction(@RequestBody SigVo sigVo) throws Exception {
         String action = "sendTransaction";
         String txHash = contractService.sendTransaction(action,sigVo);
@@ -40,7 +40,7 @@ public class ContractController {
     }
 
     @ApiOperation(value="注册dataId和tokenId", notes="注册dataId和tokenId" ,httpMethod="POST")
-    @RequestMapping(value = "/dataid", method = RequestMethod.POST)
+    @PostMapping(value = "/dataid")
     public Result dataid(@RequestBody DataIdVo dataIdVo) throws Exception {
         String action = "dataid";
         List<String> txHex = contractService.registerDataId(action,dataIdVo);

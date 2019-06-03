@@ -1,7 +1,6 @@
 package com.ontology.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
@@ -111,46 +110,46 @@ public class DatasetController2 {
             // 更新数据
             ElasticsearchUtil.updateDataById(obj, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
         }
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), id);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), id);
     }
 
-    @ApiOperation(value = "分页查询数据", notes = "分页查询数据", httpMethod = "POST")
-    @PostMapping
-    public Result getPageData(@RequestBody PageQueryVo req) {
-        String action = "getPageData";
-        List<QueryVo> queryParams = req.getQueryParams();
-        int pageIndex = req.getPageIndex();
-        int pageSize = req.getPageSize();
-
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        for (QueryVo vo : queryParams) {
-            if (StringUtils.isEmpty(vo.getText())) {
-                continue;
-            }
-            if (vo.getPercent() > 100) {
-                vo.setPercent(100);
-            } else if (vo.getPercent() < 0) {
-                vo.setPercent(0);
-            }
-            MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("column" + vo.getColumnIndex(), vo.getText()).minimumShouldMatch(vo.getPercent() + "%");
-            boolQuery.must(queryBuilder);
-        }
-        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 1);
-        boolQuery.must(queryState);
-        EsPage list = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
-
-        List<Map<String, Object>> recordList = list.getRecordList();
-        for (Map<String, Object> result : recordList) {
-            ElasticsearchUtil.formatResult(result);
-            result.remove("dataSource");
-            JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
-            JSONArray challengePeriod = JSONArray.parseArray((String) result.get("challengePeriod"));
-            result.put("judger", judger);
-            result.put("challengePeriod", challengePeriod);
-        }
-
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), list);
-    }
+//    @ApiOperation(value = "分页查询数据", notes = "分页查询数据", httpMethod = "POST")
+//    @PostMapping
+//    public Result getPageData(@RequestBody PageQueryVo req) {
+//        String action = "getPageData";
+//        List<QueryVo> queryParams = req.getQueryParams();
+//        int pageIndex = req.getPageIndex();
+//        int pageSize = req.getPageSize();
+//
+//        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+//        for (QueryVo vo : queryParams) {
+//            if (StringUtils.isEmpty(vo.getText())) {
+//                continue;
+//            }
+//            if (vo.getPercent() > 100) {
+//                vo.setPercent(100);
+//            } else if (vo.getPercent() < 0) {
+//                vo.setPercent(0);
+//            }
+//            MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("column" + vo.getColumnIndex(), vo.getText()).minimumShouldMatch(vo.getPercent() + "%");
+//            boolQuery.must(queryBuilder);
+//        }
+//        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 1);
+//        boolQuery.must(queryState);
+//        EsPage list = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
+//
+//        List<Map<String, Object>> recordList = list.getRecordList();
+//        for (Map<String, Object> result : recordList) {
+//            ElasticsearchUtil.formatResult(result);
+//            result.remove("dataSource");
+//            JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
+//            JSONArray challengePeriod = JSONArray.parseArray((String) result.get("challengePeriod"));
+//            result.put("judger", judger);
+//            result.put("challengePeriod", challengePeriod);
+//        }
+//
+//        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), list);
+//    }
 
     @ApiOperation(value = "根据id查询数据", notes = "根据id查询数据", httpMethod = "GET")
     @GetMapping("/{id}")
@@ -159,22 +158,24 @@ public class DatasetController2 {
         Map<String, Object> result = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
         ElasticsearchUtil.formatResult(result);
         result.remove("dataSource");
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), result);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), result);
     }
 
 
     @ApiOperation(value = "根据卖家ontid查询数据", notes = "根据卖家ontid查询数据", httpMethod = "GET")
     @GetMapping("/provider/{ontid}")
-    public Result getDataByProvider(@PathVariable String ontid) {
+    public Result getDataByProvider(@PathVariable String ontid, @RequestParam Integer pageNum, @RequestParam Integer pageSize) {
         String action = "getDataByProvider";
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         MatchQueryBuilder queryProvider = QueryBuilders.matchQuery("ontid", ontid);
         boolQuery.must(queryProvider);
-        List<Map<String, Object>> result = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
-        for (Map<String, Object> map : result) {
+        EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+        List<Map<String, Object>> recordList = esPage.getRecordList();
+//        List<Map<String, Object>> result = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
+        for (Map<String, Object> map : recordList) {
             ElasticsearchUtil.formatResult(map);
         }
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), result);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), esPage);
     }
 
     @ApiOperation(value = "卖家生成dataId和dataToken", notes = "卖家生成dataId和dataToken", httpMethod = "POST")
@@ -200,7 +201,7 @@ public class DatasetController2 {
             dataset.put("dataId",req.getDataId());
             dataset.put("state",1);
             ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET, id);
-            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), txHashList);
+            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHashList);
         } catch (Exception e) {
             e.printStackTrace();
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
@@ -224,7 +225,7 @@ public class DatasetController2 {
         try {
             JSONObject jsonObject = (JSONObject) sdkUtil.invokeContract(params, null, null, true);
             int balance = Integer.parseInt(com.github.ontio.common.Helper.reverse(jsonObject.getString("Result")), 16);
-            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), balance);
+            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), balance);
         } catch (Exception e) {
             e.printStackTrace();
         }

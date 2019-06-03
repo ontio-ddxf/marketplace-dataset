@@ -2,7 +2,6 @@ package com.ontology.controller;
 
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
-import com.ontology.controller.vo.JudgeVo;
 import com.ontology.entity.Judger;
 import com.ontology.service.JudgerService;
 import io.swagger.annotations.ApiOperation;
@@ -30,10 +29,10 @@ public class JudgerController {
     }
 
     @ApiOperation(value = "获取待仲裁列表", notes = "获取待仲裁列表", httpMethod = "POST")
-    @PostMapping
-    public Result getTobeJudged(@RequestBody JudgeVo req) {
+    @GetMapping("/{ontid}")
+    public Result getTobeJudged(@PathVariable String ontid,@RequestParam Integer pageNum,@PathVariable Integer pagesize) {
         String action = "getTobeJudged";
-        EsPage esPage = judgerService.getTobeJudged(action,req);
+        EsPage esPage = judgerService.getTobeJudged(action,ontid,pageNum,pagesize);
         return new Result(action,0, "SUCCESS", esPage);
     }
 }

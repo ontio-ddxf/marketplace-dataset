@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "合约调用接口")
 @RestController
-@RequestMapping("/api/v1/data-dealer/order")
+@RequestMapping("/api/v1/order")
 @CrossOrigin
 public class OrderController {
 
@@ -44,6 +44,11 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), selfOrder);
     }
 
+    /**
+     * 为防止多人重复购买，本地先记录购买状态
+     * @param req
+     * @return
+     */
     @ApiOperation(value="购买商品", notes="购买商品" ,httpMethod="POST")
     @PostMapping("/purchase")
     public Result purchase(@RequestBody PurchaseVo req) {
@@ -52,7 +57,7 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 
-    @ApiOperation(value="查看数据", notes="查看数据" ,httpMethod="POST")
+    @ApiOperation(value="查验数据", notes="查验数据" ,httpMethod="POST")
     @PostMapping("/data")
     public Result getData(@RequestBody CheckVo req) {
         String action = "getData";

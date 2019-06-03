@@ -7,8 +7,6 @@ import java.util.List;
 
 @Data
 public class OrderVo {
-    @ApiModelProperty(name="orderId",value = "orderId")
-    private String orderId;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String dataId;
     @ApiModelProperty(name="tokenId",value = "tokenId")
@@ -19,8 +17,6 @@ public class OrderVo {
     private String price;
     @ApiModelProperty(name="providerOntid",value = "卖家ontid")
     private String providerOntid;
-    @ApiModelProperty(name="demanderOntid",value = "买家ontid")
-    private String demanderOntid;
     @ApiModelProperty(name="ojList",value = "仲裁者地址列表")
     private List<String> ojList;
     @ApiModelProperty(name="keywords",value = "商品关键字")
