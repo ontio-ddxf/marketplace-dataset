@@ -7,6 +7,7 @@ import com.ontology.entity.Certifier;
 import com.ontology.service.CertifierService;
 import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
+import com.ontology.utils.ErrorInfo;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -15,7 +16,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +51,10 @@ public class CertifierController {
         boolQuery.must(queryCertifier);
         boolQuery.must(queryIsCertificated);
         boolQuery.must(queryState);
+        boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_DATASET);
+        if (!indexExist) {
+            return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), null);
+        }
         EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
         List<Map<String, Object>> certificationList = esPage.getRecordList();
         for (Map<String, Object> result:certificationList) {

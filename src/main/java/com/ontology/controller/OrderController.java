@@ -3,6 +3,7 @@ package com.ontology.controller;
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
+import com.ontology.exception.MarketplaceException;
 import com.ontology.service.OrderService;
 import com.ontology.utils.ErrorInfo;
 import io.swagger.annotations.Api;
@@ -10,7 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-@Api(tags = "合约调用接口")
+@Api(tags = "订单接口")
 @RestController
 @RequestMapping("/api/v1/order")
 @CrossOrigin
@@ -54,6 +55,9 @@ public class OrderController {
     public Result purchase(@RequestBody PurchaseVo req) {
         String action = "purchase";
         String txHash = orderService.purchase(action,req);
+        if (txHash == null) {
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
+        }
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 

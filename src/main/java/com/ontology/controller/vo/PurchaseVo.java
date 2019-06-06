@@ -3,8 +3,6 @@ package com.ontology.controller.vo;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
-
 @Data
 public class PurchaseVo {
     @ApiModelProperty(name="id",value = "id")

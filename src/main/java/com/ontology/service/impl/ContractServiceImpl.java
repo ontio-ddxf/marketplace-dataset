@@ -1,11 +1,9 @@
 package com.ontology.service.impl;
 
 
-import com.github.ontio.account.Account;
 import com.ontology.controller.vo.ContractVo;
 import com.ontology.controller.vo.DataIdVo;
 import com.ontology.controller.vo.SigVo;
-import com.ontology.secure.SecureConfig;
 import com.ontology.service.ContractService;
 import com.ontology.utils.ConfigParam;
 import com.ontology.utils.Helper;
@@ -59,6 +57,12 @@ public class ContractServiceImpl implements ContractService {
         txList.add(dataIdTxHex);
         txList.add(tokenIdTxHex);
         return txList;
+    }
+
+    @Override
+    public String sendSyncTransaction(String action, SigVo sigDataVo) throws Exception {
+        String txHash = sdk.sendSyncTransaction(sigDataVo);
+        return txHash;
     }
 
 }

@@ -169,9 +169,12 @@ public class DatasetController2 {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         MatchQueryBuilder queryProvider = QueryBuilders.matchQuery("ontid", ontid);
         boolQuery.must(queryProvider);
+        boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_DATASET);
+        if (!indexExist) {
+            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), null);
+        }
         EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
         List<Map<String, Object>> recordList = esPage.getRecordList();
-//        List<Map<String, Object>> result = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
         for (Map<String, Object> map : recordList) {
             ElasticsearchUtil.formatResult(map);
         }
@@ -191,7 +194,7 @@ public class DatasetController2 {
         }
         try {
             // 发送交易
-            String dataIdTxHash = contractService.sendTransaction(action, req.getSigDataVo());
+            String dataIdTxHash = contractService.sendSyncTransaction(action, req.getSigDataVo());
             String tokenIdTxHash = contractService.sendTransaction(action, req.getSigTokenVo());
             List<String> txHashList = new ArrayList<>();
             txHashList.add(dataIdTxHash);

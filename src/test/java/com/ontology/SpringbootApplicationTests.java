@@ -1,20 +1,24 @@
 package com.ontology;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.github.ontio.common.Address;
+import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
-//@RunWith(SpringRunner.class)
-//@SpringBootTest
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class SpringbootApplicationTests {
 
 	@Test
@@ -33,16 +37,32 @@ public class SpringbootApplicationTests {
 	@Test
 	public void testSearchES2() {
 		Map<String,Object> map = new HashMap<>();
-		map.put("dataId","qwert");
-		map.put("name","suibianyige");
-		map.put("keyword","关键字");
-		Map<String,Object> data = new HashMap<>();
-		data.put("coin","ong");
-		data.put("ontid","did:ont:AUJjTER6xUkfSwh2GApyrgxFRZn7ib8cix");
-		data.put("price","100");
-		data.put("tag0", JSON.toJSONString(map));
-		String s = ElasticsearchUtil.addData(data, "dataset_index", "dataTag");
+		map.put("orderId","feb68d3b8e6a284fb961032985f5543e530e9eb1");
+		map.put("state","1");
 
+		ElasticsearchUtil.updateDataById(map, "order_index", "order","FC182E0385D043B5A5C6D7C79B3E0D9D");
+
+	}
+
+	@Test
+	public void uupdateOrderId() {
+		JSONArray objects = JSONArray.parseArray("[\"did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8\",\"did:ont:AacQn34p97jdtt95ftfJTTfz6wpm9nZ4j4\"]");
+//		List<String> ojList = new ArrayList<>();
+//		for (Object o : objects) {
+//			String addr = Address.parse((String) o).toBase58();
+//			ojList.add(addr);
+//		}
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		MatchQueryBuilder queryToken = QueryBuilders.matchQuery("tokenId", 16);
+		MatchQueryBuilder queryAmount = QueryBuilders.matchQuery("amount", 4);
+		MatchQueryBuilder queryPrice = QueryBuilders.matchQuery("price", 2000000000);
+		MatchQueryBuilder queryJudger = QueryBuilders.matchQuery("judger", JSON.toJSONString(objects));
+		boolQuery.must(queryToken);
+		boolQuery.must(queryAmount);
+		boolQuery.must(queryPrice);
+		boolQuery.must(queryJudger);
+		List<Map<String, Object>> list = ElasticsearchUtil.searchListData(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, boolQuery, null, null, null, null);
+		log.info("{}",list.get(0));
 	}
 
 	@Test

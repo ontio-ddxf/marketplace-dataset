@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -233,4 +234,22 @@ public class SDKUtil {
         return s;
     }
 
+    public String sendSyncTransaction(SigVo sigVo) throws Exception {
+        byte[] bytes = Helper.hexToBytes(sigVo.getTxHex());
+        Transaction tx = Transaction.deserializeFrom(bytes);
+        Sig[] sigs = new Sig[1];
+        sigs[0] = new Sig();
+        sigs[0].M = 1;
+        sigs[0].pubKeys = new byte[1][];
+        sigs[0].sigData = new byte[1][];
+        sigs[0].pubKeys[0] = Helper.hexToBytes(sigVo.getPubKeys());
+        sigs[0].sigData[0] = Helper.hexToBytes(sigVo.getSigData());
+        tx.sigs = sigs;
+
+        OntSdk ontSdk = getOntSdk();
+        Account payer = new Account(Account.getPrivateKeyFromWIF(secureConfig.getPayer()), ontSdk.getWalletMgr().getSignatureScheme());
+        ontSdk.addSign(tx,payer);
+        ontSdk.getConnect().sendRawTransactionSync(tx.toHexString());
+        return tx.hash().toString();
+    }
 }

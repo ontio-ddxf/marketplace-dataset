@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.controller.vo.DataVo;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -19,7 +18,6 @@ import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -36,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @Author: LX
@@ -53,6 +50,7 @@ public class ElasticsearchUtil {
     private TransportClient transportClient;
 
     private static TransportClient client;
+
 
     /**
      * @PostContruct是spring框架的注解 spring容器初始化的时候执行该方法
@@ -424,5 +422,20 @@ public class ElasticsearchUtil {
             }
         }
     }
+    public static void formatOrderResult(Map<String, Object> result) {
+        if (result != null) {
+            List<String> keywords = new ArrayList<>();
+            for (int i = 0; i< result.size(); i++) {
+                if (!result.containsKey("column"+i)) {
+                    break;
+                } else {
+                    keywords.add((String) result.get("column"+i));
+                    result.remove("column"+i);
+                }
+            }
+            result.put("keywords",keywords);
+        }
+    }
+
 
 }

@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -41,13 +43,17 @@ public class OrderServiceImpl implements OrderService {
     public String createOrder(String action, OrderVo orderVo) {
         String dataId = orderVo.getDataId();
         String tokenId = orderVo.getTokenId();
+        String name = orderVo.getName();
+        String desc = orderVo.getDesc();
+        String img = orderVo.getImg();
         String providerOntid = orderVo.getProviderOntid();
         String tokenHash = orderVo.getTokenHash();
         String price = orderVo.getPrice();
+        Integer amount = orderVo.getAmount();
         List<String> ojList = orderVo.getOjList();
         List<String> keywords = orderVo.getKeywords();
         SigVo sigVo = orderVo.getSigVo();
-        // todo 先发送交易
+        // 先发送交易
         try {
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
             // es创建order
@@ -55,12 +61,16 @@ public class OrderServiceImpl implements OrderService {
             order.put("orderId","");
             order.put("dataId",dataId);
             order.put("tokenId",tokenId);
+            order.put("name",name);
+            order.put("desc",desc);
+            order.put("img",img);
             order.put("providerOntid",providerOntid);
             order.put("demanderOntid","");
             order.put("tokenHash",tokenHash);
             order.put("price",price);
-//            order.put("amount",10);
+            order.put("amount",amount);
             order.put("judger",JSON.toJSONString(ojList));
+            order.put("arbitrage","");
             // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
             // 对应显示：1-挂单中；2-正在出售；3-购买中；4-购买成功；5-确认中；6-已确认
             // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；0-取消
@@ -104,11 +114,16 @@ public class OrderServiceImpl implements OrderService {
         MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", "1");
         boolQuery.must(queryState);
         try {
-            // 根据id查询数据是否存在
+            // 查询索引是否存在，不存在直接返回空
+            boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
+            if (!indexExist) {
+                return null;
+            }
             EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
 
             List<Map<String, Object>> recordList = esPage.getRecordList();
             for (Map<String, Object> result : recordList) {
+                ElasticsearchUtil.formatOrderResult(result);
                 JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
                 result.put("judger", judger);
             }
@@ -136,25 +151,42 @@ public class OrderServiceImpl implements OrderService {
             queryType = QueryBuilders.matchQuery("providerOntid", ontid);
         }
         boolQuery.must(queryType);
-        EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
-        // 判断订单是否超时:1-超时；2-未超时
-        List<Map<String, Object>> recordList = esPage.getRecordList();
-        for (Map<String, Object> order : recordList) {
-            String expireTime = (String) order.get("expireTime");
-            if (StringUtils.isNotEmpty(expireTime)) {
-                Date expireDate = JSON.parseObject(expireTime, Date.class);
-                if (expireDate.before(new Date())) {
-                    // 超时
-                    order.put("isExpired","1");
-                } else {
-                    // 未超时
-                    order.put("isExpired","0");
-                }
-            } else {
-                order.put("isExpired","0");
+        try {
+            boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
+            if (!indexExist) {
+                return null;
             }
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+            // 判断订单是否超时:1-超时；2-未超时
+            List<Map<String, Object>> recordList = esPage.getRecordList();
+            for (Map<String, Object> order : recordList) {
+                ElasticsearchUtil.formatOrderResult(order);
+                String expireTime = (String) order.get("expireTime");
+                if (StringUtils.isNotEmpty(expireTime)) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    Date expireDate = null;
+                    try {
+                        expireDate = sdf.parse(expireTime);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+//                    Date expireDate = JSON.parseObject(expireTime, Date.class);
+                    if (new Date().after(expireDate)) {
+                        // 超时
+                        order.put("isExpired", "1");
+                    } else {
+                        // 未超时
+                        order.put("isExpired", "0");
+                    }
+                } else {
+                    order.put("isExpired", "0");
+                }
+            }
+            return esPage;
+        } catch (IndexNotFoundException e) {
+
         }
-        return esPage;
+        return null;
     }
 
     @Override
@@ -162,12 +194,12 @@ public class OrderServiceImpl implements OrderService {
         String id = req.getId();
         String demanderOntid = req.getDemanderOntid();
         String judger = req.getJudger();
-        Integer expireTime = req.getExpireTime();
-        long i = new Date().getTime() + (expireTime * 24 * 3600 * 1000);
+        Integer expireTime = 10;
+        long i = new Date().getTime() + (expireTime * 60 * 1000);
         Date expireDate = new Date(i);
         SigVo sigVo = req.getSigVo();
         try {
-            // todo 先发送交易
+            // 先发送交易
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
 
             Map<String, Object> order = new HashMap<>();
