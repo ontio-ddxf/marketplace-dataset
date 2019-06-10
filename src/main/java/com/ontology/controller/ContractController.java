@@ -42,7 +42,7 @@ public class ContractController {
     @ApiOperation(value="注册dataId和tokenId", notes="注册dataId和tokenId" ,httpMethod="POST")
     @PostMapping(value = "/dataid")
     public Result dataid(@RequestBody DataIdVo dataIdVo) throws Exception {
-        String action = "dataid";
+        String action = "registerDataId";
         List<String> txHex = contractService.registerDataId(action,dataIdVo);
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHex);
     }

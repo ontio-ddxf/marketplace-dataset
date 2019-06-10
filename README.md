@@ -18,6 +18,7 @@
 * 5. [仲裁接口](#仲裁接口)
 	* 5.1. [获取仲裁方列表](#获取仲裁方列表)
 	* 5.2. [获取待仲裁列表](#获取待仲裁列表)
+	* 5.3. [发送仲裁结果](#发送仲裁结果)
 * 6. [合约调用接口](#合约调用接口)
 	* 6.1. [构造交易](#构造交易)
 	* 6.2. [发送交易](#发送交易)
@@ -61,7 +62,7 @@ method：PUT
 	"data": {
 		"desc": "descrption for data",
 		"img": "http://image.image.com/",
-		"keywords": ["word1", "word2"],
+		"keywords": ["keyword1", "keyword2"],
 		"metadata": "metadata",
 		"name": "data name"
 	},
@@ -107,7 +108,7 @@ method：PUT
 
 ```
 url:/api/v1/dataset/{id}
-method:Get
+method:GET
 ```
 | Field Name | Type | Description |
 |---|---|---|
@@ -127,10 +128,7 @@ method:Get
         "data": {
             "desc": "descrption for data",
             "img": "http://image.image.com/",
-            "keywords": [
-                "word1",
-                "word2"
-            ],
+            "keywords": ["keyword1","keyword2"],
             "metadata": "metadata",
             "name": "data name"
         },
@@ -154,7 +152,7 @@ method:Get
 
 ### 根据卖家ontid返回数据
 ```
-url：/api/v1/dataset/provider/{ontid}?{pageNum}&{pageSize}
+url：/api/v1/dataset/provider/{ontid}?pageNum=&pageSize=
 method：GET
 ```
 
@@ -184,10 +182,7 @@ method：GET
                 "data": {
                     "desc": "descrption for data",
                     "img": "http://image.image.com/",
-                    "keywords": [
-                        "word1",
-                        "word2"
-                    ],
+                    "keywords": ["keyword1","keyword2"],
                     "metadata": "metadata",
                     "name": "data name"
                 },
@@ -276,8 +271,8 @@ method：POST
 ###  查询token余额
 
 ```
-url：/token/balance/{address}/{tokenId}
-method：Get
+url：/api/v1/dataset/token/balance/{address}/{tokenId}
+method：GET
 ```
 
 | Field Name | Type | Description |
@@ -337,7 +332,7 @@ method：GET
 
 ###  认证人获取待认证列表
 ```
-url：/api/v1/certifier/{certifier}?{pageNum}&{pageSize}
+url：/api/v1/certifier/{certifier}?pageNum=&pageSize=
 method：GET
 ```
 | Field Name | Type | Description |
@@ -366,10 +361,7 @@ method：GET
                 "data": {
                     "desc": "descrption for data",
                     "img": "http://image.image.com/",
-                    "keywords": [
-                        "word1",
-                        "word2"
-                    ],
+                    "keywords": ["keyword1","keyword2"],
                     "metadata": "metadata",
                     "name": "data name"
                 },
@@ -451,7 +443,7 @@ method：POST
 	"tokenId": 1,
 	"tokenHash": "0000000000000000000000000000000000000002",
 	"price": "100",
-	"providerOntid": "did: ont: AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+	"providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
 	"ojList": ["did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1","did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"],
 	"keywords": ["keyword1","keyword2"],
 	"sigVo": {
@@ -534,8 +526,7 @@ method：POST
         "recordCount": 1,
         "recordList": [
             {
-                "column1": "keyword2",
-                "column0": "keyword1",
+                "keywords":["keyword1","keyword2"],
                 "tokenId": "1",
                 "orderId": "ba24bb9d3dee415e9c9c12acaf78c973",
                 "confirmTime": "",
@@ -551,7 +542,7 @@ method：POST
                     "did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1",
                     "did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"
                 ],
-                "providerOntid": "did: ont: AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+                "providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
                 "state": "1",
                 "id": "D4D1FA099FD140519AA71F942465CBF9"
             }
@@ -585,7 +576,7 @@ method：POST
 	"pageNum": 0,
 	"pageSize": 5,
 	"type":2,
-	"ontid":"did: ont: AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"
+	"ontid":"did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"
 }
 ```
 | Field Name | Type | Description |
@@ -608,8 +599,7 @@ method：POST
         "recordCount": 1,
         "recordList": [
             {
-                "column1": "keyword2",
-                "column0": "keyword1",
+                "keywords":["keyword1","keyword2"],
                 "tokenId": "1",
                 "orderId": "ba24bb9d3dee415e9c9c12acaf78c973",
                 "confirmTime": "",
@@ -620,9 +610,9 @@ method：POST
                 "createTime": "2019-06-03 15:10:28",
                 "cancelTime": "",
                 "price": "100",
-                "demanderOntid": "",
-                "judger": "[\"did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1\",\"did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8\"]",
-                "providerOntid": "did: ont: AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+                "demanderOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+                "judger": ["did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1","did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"],
+                "providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
                 "state": "1",
                 "id": "D4D1FA099FD140519AA71F942465CBF9",
                 "isExpired": "0"
@@ -654,15 +644,15 @@ method：POST
 请求：
 ```source-json
 {
-     	"id": "D4D1FA099FD140519AA71F942465CBF9",
-     	"demanderOntid": "did:ont:AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
-     	"judger": "did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1",
-     	"expireTime":15,
-     	"sigVo": {
-     		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
-     		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
-     		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
-     	}
+	"id": "D4D1FA099FD140519AA71F942465CBF9",
+	"demanderOntid": "did:ont:AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
+	"judger": "did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1",
+	"expireTime": 15,
+	"sigVo": {
+		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
+		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
+		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
+	}
 }
 ```
 | Field Name | Type | Description |
@@ -677,7 +667,7 @@ method：POST
 
 ```source-json
 {
-    "action": "findSelfOrder",
+    "action": "purchase",
     "code": 0,
     "msg": "SUCCESS",
     "result": "85f50a7c1c25632bdf1ae6708e9233c7ea1169336bcf5f14b8d926c3e99a76ec",
@@ -716,7 +706,7 @@ method：POST
 
 ```source-json
 {
-    "action": "findSelfOrder",
+    "action": "getData",
     "code": 0,
     "msg": "SUCCESS",
     "result": "www.data.com",
@@ -768,7 +758,7 @@ method：GET
 
 ###  获取待仲裁列表
 ```
-url：/api/v1/judger/{ontid}?{pageNum}&{pageSize}
+url：/api/v1/judger/{ontid}?pageNum=&pageSize=
 method：GET
 ```
 
@@ -786,8 +776,7 @@ method：GET
 	"code": 0,
 	"msg": "SUCCESS",
 	"result": [{
-		"column1": "keyword2",
-		"column0": "keyword1",
+		"keywords": ["keyword1","keyword2"],
 		"tokenId": "1",
 		"orderId": "ba24bb9d3dee415e9c9c12acaf78c973",
 		"confirmTime": "",
@@ -822,21 +811,66 @@ method：GET
 | version   | String | 版本号                        |
 
 
+###  发送仲裁结果
+```
+url：/api/v1/judger/result
+method：POST
+```
+
+请求：
+```
+{
+	"id": "D4D1FA099FD140519AA71F942465CBF9",
+	"winOrLose": true,
+	"sigVo": {
+		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
+		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
+		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
+	}
+}
+```
+| Field Name | Type | Description |
+|---|---|---|
+|id|String|标识订单id，非orderId|
+|winOrLose|Boolean|仲裁结果|
+|sigVo|Map|仲裁的签名信息|
+
+响应：
+
+```source-json
+{
+    "action": "judgeResult",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": "85f50a7c1c25632bdf1ae6708e9233c7ea1169336bcf5f14b8d926c3e99a76ec",
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回交易hash，失败返回"" |
+| version   | String | 版本号                        |
+
+
 ## 合约调用接口
 
 ###  构造交易
 ```
-url：/api/v1/contract
+url：/api/v1/contract/transaction
 method：POST
 ```
 请求：
 ```source-json
 {
-  "argsList": [
+    "argsList": [
     {"name":"account","value":"Address:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"},{"name":"dataId","value":"String:did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT"},{"name":"ontid","value":"String:did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"},{"name":"index","value":1},{"name":"symbol","value":"String:test"},{"name":"name","value":"String:testName"},{"name":"totalAmount","value":12}
-  ],
-  "contractHash": "01d6e6bdc03efe68d5754956ed182e4381b7a9d9",
-  "method": "createTokenWithController"
+    ],
+    "contractHash": "01d6e6bdc03efe68d5754956ed182e4381b7a9d9",
+    "method": "createTokenWithController"
 }
 ```
 | Field Name | Type | Description |
@@ -962,7 +996,7 @@ method：POST
 
 ```source-json
 {
-	"action": "dataid",
+	"action": "registerDataId",
 	"code": 0,
 	"msg": "SUCCESS",
 	"result": ["00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000":"00d17bb1432df401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000"],
