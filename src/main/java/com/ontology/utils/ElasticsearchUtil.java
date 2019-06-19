@@ -182,6 +182,23 @@ public class ElasticsearchUtil {
     }
 
     /**
+     * 根据ID以及版本号更新数据（事务控制）
+     * @param obj
+     * @param index
+     * @param type
+     * @param id
+     * @param version
+     */
+    public static void updateDataByIdAndVersion(Map obj, String index, String type, String id, Long version) {
+
+        UpdateRequest updateRequest = new UpdateRequest();
+
+        updateRequest.index(index).type(type).id(id).doc(obj).version(version).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        client.update(updateRequest).actionGet();
+
+    }
+
+    /**
      * 通过ID获取数据
      *
      * @param index  索引，类似数据库

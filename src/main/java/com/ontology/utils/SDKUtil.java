@@ -47,7 +47,7 @@ public class SDKUtil {
         Account payerAcct = new Account(Account.getPrivateKeyFromWIF(secureConfig.getPayer()), ontSdk.getWalletMgr().getSignatureScheme());
         HashMap<String, String> res = new HashMap<>();
         Identity identity = ontSdk.getWalletMgr().createIdentity(pwd);
-        String txhash = ontSdk.nativevm().ontId().sendRegister(identity,pwd,payerAcct,20000, 0);
+        String txhash = ontSdk.nativevm().ontId().sendRegister(identity,pwd,payerAcct,20000, 500);
         ontSdk.getWalletMgr().getWallet().clearIdentity();
         ontSdk.getWalletMgr().writeWallet();
         Map keystore = WalletQR.exportIdentityQRCode(ontSdk.getWalletMgr().getWallet(), identity);
@@ -223,7 +223,7 @@ public class SDKUtil {
         List list = new ArrayList();
         list.add(new Struct().add(dataId,ontid,pubKey));
         arg = NativeBuildParams.createCodeParamsScript(list);
-        Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes("0000000000000000000000000000000000000003")),"regIDWithController",arg,configParam.PAYER_ADDRESS,20000,0);
+        Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes("0000000000000000000000000000000000000003")),"regIDWithController",arg,configParam.PAYER_ADDRESS,20000,500);
         return tx.toHexString();
     }
 

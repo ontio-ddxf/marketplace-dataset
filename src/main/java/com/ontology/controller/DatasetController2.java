@@ -16,6 +16,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -49,7 +50,7 @@ public class DatasetController2 {
         DataVo data = req.getData();
         List<String> keywords = data.getKeywords();
         String dataSource = req.getDataSource();
-        if (keywords == null) {
+        if (CollectionUtils.isEmpty(keywords)) {
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
         }
 
@@ -113,43 +114,6 @@ public class DatasetController2 {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), id);
     }
 
-//    @ApiOperation(value = "分页查询数据", notes = "分页查询数据", httpMethod = "POST")
-//    @PostMapping
-//    public Result getPageData(@RequestBody PageQueryVo req) {
-//        String action = "getPageData";
-//        List<QueryVo> queryParams = req.getQueryParams();
-//        int pageIndex = req.getPageIndex();
-//        int pageSize = req.getPageSize();
-//
-//        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-//        for (QueryVo vo : queryParams) {
-//            if (StringUtils.isEmpty(vo.getText())) {
-//                continue;
-//            }
-//            if (vo.getPercent() > 100) {
-//                vo.setPercent(100);
-//            } else if (vo.getPercent() < 0) {
-//                vo.setPercent(0);
-//            }
-//            MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("column" + vo.getColumnIndex(), vo.getText()).minimumShouldMatch(vo.getPercent() + "%");
-//            boolQuery.must(queryBuilder);
-//        }
-//        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", 1);
-//        boolQuery.must(queryState);
-//        EsPage list = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageIndex, pageSize, boolQuery, null, "createTime.keyword", null);
-//
-//        List<Map<String, Object>> recordList = list.getRecordList();
-//        for (Map<String, Object> result : recordList) {
-//            ElasticsearchUtil.formatResult(result);
-//            result.remove("dataSource");
-//            JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
-//            JSONArray challengePeriod = JSONArray.parseArray((String) result.get("challengePeriod"));
-//            result.put("judger", judger);
-//            result.put("challengePeriod", challengePeriod);
-//        }
-//
-//        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descCN(), list);
-//    }
 
     @ApiOperation(value = "根据id查询数据", notes = "根据id查询数据", httpMethod = "GET")
     @GetMapping("/{id}")

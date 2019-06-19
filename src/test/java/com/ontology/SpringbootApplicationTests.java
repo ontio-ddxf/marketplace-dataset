@@ -7,6 +7,7 @@ import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Test;
@@ -41,6 +42,39 @@ public class SpringbootApplicationTests {
 		map.put("state","1");
 
 		ElasticsearchUtil.updateDataById(map, "order_index", "order","FC182E0385D043B5A5C6D7C79B3E0D9D");
+
+	}
+
+	@Test
+	public void updateData() {
+		Map<String,Object> map = new HashMap<>();
+		map.put("state","5");
+
+		ElasticsearchUtil.updateDataById(map, "order_index", "order","8E38579484324634BEE1D2DE0F888644");
+
+	}
+
+	@Test
+	public void searchOrder() {
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		MatchQueryBuilder order = QueryBuilders.matchQuery("orderId.keyword", "");
+		boolQuery.must(order);
+		List<Map<String, Object>> list = ElasticsearchUtil.searchListData(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, boolQuery, null, null, null, null);
+		log.info("{}",list);
+
+	}
+
+	@Test
+	public void deleteOrder() {
+		ElasticsearchUtil.deleteDataById(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER,"70A9AE313BBF45298898EEF7469B4E7B");
+
+	}
+
+	@Test
+	public void testVersion() {
+		Map<String,Object> map = new HashMap<>();
+		map.put("dataId","");
+		ElasticsearchUtil.updateDataByIdAndVersion(map,Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET,"ef4952d865764871abf205d272cbbb7d",3L);
 
 	}
 

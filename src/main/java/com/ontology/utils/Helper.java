@@ -267,7 +267,7 @@ public class Helper {
         invokeConfig.put("functions",functions);
         invokeConfig.put("payer",payer);
         invokeConfig.put("gasLimit",80000);
-        invokeConfig.put("gasPrice",0);
+        invokeConfig.put("gasPrice",500);
 
         parms.put("invokeConfig",invokeConfig);
         parms.put("ontid",ontid);
