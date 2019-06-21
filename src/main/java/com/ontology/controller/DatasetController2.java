@@ -64,7 +64,7 @@ public class DatasetController2 {
         String date = JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", "");
         obj.put("id", id);
         obj.put("dataId", "");
-        obj.put("tokenId", "");
+        obj.put("tokenRange", "");
         obj.put("ontid", ontid);
         obj.put("createTime", date);
         obj.put("certifier", certifier);

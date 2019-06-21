@@ -4,6 +4,8 @@ package com.ontology.service;
 import com.ontology.bean.EsPage;
 import com.ontology.controller.vo.*;
 
+import java.util.Map;
+
 public interface OrderService {
 
     String createOrder(String action, OrderVo orderVo);
@@ -15,4 +17,9 @@ public interface OrderService {
     String purchase(String action, PurchaseVo req);
 
     String getData(String action, CheckVo req);
+
+    int getCurrentTokenId(String action, String id);
+
+    Map<String, Object> getTokenBalance(String action, int tokenId) throws Exception;
+
 }

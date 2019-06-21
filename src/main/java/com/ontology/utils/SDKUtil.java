@@ -252,4 +252,11 @@ public class SDKUtil {
         ontSdk.getConnect().sendRawTransactionSync(tx.toHexString());
         return tx.hash().toString();
     }
+
+    public Object sendPreTransaction(String params) throws Exception {
+        OntSdk ontSdk = getOntSdk();
+        Transaction[] txs = ontSdk.makeTransactionByJson(params);
+        Object o = ontSdk.getConnect().sendRawTransactionPreExec(txs[0].toHexString());
+        return o;
+    }
 }

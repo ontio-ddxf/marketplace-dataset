@@ -220,6 +220,18 @@ public class ElasticsearchUtil {
         return source;
     }
 
+    public static GetResponse searchVersionById(String index, String type, String id, String fields) {
+
+        GetRequestBuilder getRequestBuilder = client.prepareGet(index, type, id);
+
+        if (StringUtils.isNotEmpty(fields)) {
+            getRequestBuilder.setFetchSource(fields.split(","), null);
+        }
+
+        GetResponse getResponse = getRequestBuilder.execute().actionGet();
+        return getResponse;
+    }
+
 
     /**
      * 使用分词查询,并分页

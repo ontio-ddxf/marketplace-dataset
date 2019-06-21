@@ -3,16 +3,16 @@ package com.ontology.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.controller.vo.*;
 import com.ontology.exception.MarketplaceException;
 import com.ontology.service.ContractService;
 import com.ontology.service.OrderService;
-import com.ontology.utils.Constant;
-import com.ontology.utils.ElasticsearchUtil;
-import com.ontology.utils.ErrorInfo;
+import com.ontology.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
@@ -32,6 +32,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private ContractService contractService;
+    @Autowired
+    private ConfigParam configParam;
+    @Autowired
+    private SDKUtil sdkUtil;
 
     /**
      * 需要记录身份ontid，检索条件等，所以需要同步到区块事件前提前创建/修改order
@@ -41,18 +45,65 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public String createOrder(String action, OrderVo orderVo) {
+        String id = orderVo.getId();
         String dataId = orderVo.getDataId();
-        String tokenId = orderVo.getTokenId();
+        int tokenId = orderVo.getTokenId();
         String name = orderVo.getName();
         String desc = orderVo.getDesc();
         String img = orderVo.getImg();
         String providerOntid = orderVo.getProviderOntid();
         String tokenHash = orderVo.getTokenHash();
         String price = orderVo.getPrice();
-        Integer amount = orderVo.getAmount();
+//        Integer amount = orderVo.getAmount();
         List<String> ojList = orderVo.getOjList();
         List<String> keywords = orderVo.getKeywords();
         SigVo sigVo = orderVo.getSigVo();
+
+        GetResponse getResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        long version = getResponse.getVersion();
+        Map<String, Object> data = getResponse.getSource();
+        String tokenRange = (String) data.get("tokenRange");
+        String[] split = tokenRange.split(",");
+        int length = split.length;
+        if (length % 2 == 1) {
+            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(),ErrorInfo.DB_ERROR.descEN(),ErrorInfo.DB_ERROR.code());
+        }
+        int currentTokenId = 0;
+        boolean haveToken = false;
+        for (int j = 0; j < (length / 2); j++) {
+            int startToken = Integer.parseInt(split[j * 2]);
+            int endToken = Integer.parseInt(split[j * 2 + 1]);
+            if (startToken>endToken) {
+                continue;
+            }
+            currentTokenId = startToken;
+            startToken ++;
+            split[j * 2] = String.valueOf(startToken);
+            haveToken = true;
+        }
+        if (currentTokenId!=tokenId) {
+            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
+        }
+
+        // 没有可用token，结束挂单
+        if (!haveToken) {
+            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(),ErrorInfo.NOT_EXIST.descEN(),ErrorInfo.NOT_EXIST.code());
+        }
+
+        StringBuffer sb = new StringBuffer();
+        for(int i = 0; i < split.length; i++){
+            sb.append(split[i]);
+            if (i != split.length-1) {
+                sb.append(",");
+            }
+        }
+        String newRange = sb.toString();
+        Map<String,Object> map = new HashMap<>();
+        map.put("tokenRange",newRange);
+        // 先更新dataset记录，用乐观锁控制并发及tokenId重复挂单
+        ElasticsearchUtil.updateDataByIdAndVersion(map,Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET,id,version);
+
+
         // 先发送交易
         try {
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
@@ -68,7 +119,7 @@ public class OrderServiceImpl implements OrderService {
             order.put("demanderOntid","");
             order.put("tokenHash",tokenHash);
             order.put("price",price);
-            order.put("amount",amount);
+//            order.put("amount",amount);
             order.put("judger",JSON.toJSONString(ojList));
             order.put("arbitrage","");
             // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
@@ -198,6 +249,7 @@ public class OrderServiceImpl implements OrderService {
         long i = new Date().getTime() + (expireTime * 60 * 1000);
         Date expireDate = new Date(i);
         SigVo sigVo = req.getSigVo();
+
         try {
             // 先发送交易
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
@@ -231,9 +283,9 @@ public class OrderServiceImpl implements OrderService {
             throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
         }
         // 查找数据源
-        String tokenId = (String) order.get("tokenId");
+        String dataId = (String) order.get("dataId");
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        MatchQueryBuilder queryToken = QueryBuilders.matchQuery("tokenId", tokenId);
+        MatchQueryBuilder queryToken = QueryBuilders.matchQuery("dataId", dataId);
         boolQuery.must(queryToken);
         List<Map<String, Object>> dataList = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
         if (CollectionUtils.isEmpty(dataList)) {
@@ -242,6 +294,60 @@ public class OrderServiceImpl implements OrderService {
         Map<String, Object> dataset = dataList.get(0);
         String data = (String) dataset.get("dataSource");
         return data;
+    }
+
+    @Override
+    public int getCurrentTokenId(String action, String id) {
+        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        String tokenRange = (String) data.get("tokenRange");
+        String[] split = tokenRange.split(",");
+        int length = split.length;
+        if (length % 2 == 1) {
+            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(),ErrorInfo.DB_ERROR.descEN(),ErrorInfo.DB_ERROR.code());
+        }
+        int currentTokenId = 0;
+        boolean haveToken = false;
+        for (int j = 0; j < (length / 2); j++) {
+            int startToken = Integer.parseInt(split[j * 2]);
+            int endToken = Integer.parseInt(split[j * 2 + 1]);
+            if (startToken>endToken) {
+                continue;
+            }
+            currentTokenId = startToken;
+            startToken ++;
+            split[j * 2] = String.valueOf(startToken);
+            haveToken = true;
+        }
+
+        // 没有可用token，结束挂单
+        if (!haveToken) {
+            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(),ErrorInfo.NOT_EXIST.descEN(),ErrorInfo.NOT_EXIST.code());
+        }
+        return currentTokenId;
+    }
+
+    @Override
+    public Map<String, Object> getTokenBalance(String action, int tokenId) throws Exception {
+        List<Map<String,Object>> argList = new ArrayList<>();
+        Map<String,Object> map = new HashMap<>();
+        map.put("name","tokenId");
+        map.put("value",tokenId);
+        argList.add(map);
+        String transferCountParams = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "getTransferCount", argList, configParam.PAYER_ADDRESS);
+        String accessCountParams = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "getAccessCount", argList, configParam.PAYER_ADDRESS);
+        String expireTimeParams = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "getExpireTime", argList, configParam.PAYER_ADDRESS);
+        JSONObject transferObj = (JSONObject) sdkUtil.sendPreTransaction(transferCountParams);
+        JSONObject accessObj = (JSONObject) sdkUtil.sendPreTransaction(accessCountParams);
+        JSONObject expireObj = (JSONObject) sdkUtil.sendPreTransaction(expireTimeParams);
+        String transferResult = transferObj.getString("Result");
+        String accessResult = accessObj.getString("Result");
+        String expireResult = expireObj.getString("Result");
+
+        Map<String,Object> result = new HashMap<>();
+        result.put("transferCount",Long.parseLong(com.github.ontio.common.Helper.reverse(transferResult), 16));
+        result.put("accessCount",Long.parseLong(com.github.ontio.common.Helper.reverse(accessResult), 16));
+        result.put("expireTimeCount",Long.parseLong(com.github.ontio.common.Helper.reverse(expireResult), 16));
+        return result;
     }
 
 }

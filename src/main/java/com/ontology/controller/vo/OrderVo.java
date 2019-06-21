@@ -7,10 +7,12 @@ import java.util.List;
 
 @Data
 public class OrderVo {
+    @ApiModelProperty(name="id",value = "id")
+    private String id;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String dataId;
     @ApiModelProperty(name="tokenId",value = "tokenId")
-    private String tokenId;
+    private int tokenId;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String name;
     @ApiModelProperty(name="tokenId",value = "tokenId")
@@ -21,8 +23,8 @@ public class OrderVo {
     private String tokenHash;
     @ApiModelProperty(name="price",value = "价格")
     private String price;
-    @ApiModelProperty(name="amount",value = "数量")
-    private Integer amount;
+//    @ApiModelProperty(name="amount",value = "数量")
+//    private Integer amount;
     @ApiModelProperty(name="providerOntid",value = "卖家ontid")
     private String providerOntid;
     @ApiModelProperty(name="ojList",value = "仲裁者地址列表")

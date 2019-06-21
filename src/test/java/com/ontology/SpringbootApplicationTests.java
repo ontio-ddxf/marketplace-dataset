@@ -6,6 +6,7 @@ import com.github.ontio.common.Address;
 import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
@@ -24,10 +25,13 @@ public class SpringbootApplicationTests {
 
 	@Test
 	public void contextLoads() {
-		String expireTime = JSON.toJSONStringWithDateFormat(new Date(),"yyyy-MM-dd HH:mm:ss");
-		log.info("{}",expireTime);
-		Date expireDate = JSON.parseObject(expireTime, Date.class);
-		log.info("{}",expireDate);
+//		String tokenRange = "1,2,,,3";  [1, 2, , , 3]  5
+//		String tokenRange = "1,2,,3"; [1, 2, ,, 3]  4
+//		String tokenRange = "1,2,,";[1, 2]  2
+		String tokenRange = "1,2,,,,,";
+		String[] split = tokenRange.split(",");
+		log.info("{}",Arrays.toString(split));
+		log.info("{}",split.length);
 	}
 
 	@Test
@@ -72,9 +76,12 @@ public class SpringbootApplicationTests {
 
 	@Test
 	public void testVersion() {
-		Map<String,Object> map = new HashMap<>();
-		map.put("dataId","");
-		ElasticsearchUtil.updateDataByIdAndVersion(map,Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET,"ef4952d865764871abf205d272cbbb7d",3L);
+		GetResponse getResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, "3D4DB44F9F44449992CF76CB9B462E5F", null);
+		long version = getResponse.getVersion();
+		log.info("version:{}",version);
+//		Map<String,Object> map = new HashMap<>();
+//		map.put("dataId","");
+//		ElasticsearchUtil.updateDataByIdAndVersion(map,Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET,"ef4952d865764871abf205d272cbbb7d",3L);
 
 	}
 

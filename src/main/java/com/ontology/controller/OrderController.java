@@ -11,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Api(tags = "订单接口")
 @RestController
 @RequestMapping("/api/v1/order")
@@ -66,6 +68,22 @@ public class OrderController {
     public Result getData(@RequestBody CheckVo req) {
         String action = "getData";
         String data = orderService.getData(action,req);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), data);
+    }
+
+    @ApiOperation(value="查询当前tokenId", notes="查询当前tokenId" ,httpMethod="POST")
+    @GetMapping("/token/{id}")
+    public Result getCurrentTokenId(@PathVariable String id) {
+        String action = "getCurrentTokenId";
+        int tokenId = orderService.getCurrentTokenId(action,id);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), tokenId);
+    }
+
+    @ApiOperation(value="查询token剩余流转次数和访问次数", notes="查询token剩余流转次数和访问次数" ,httpMethod="POST")
+    @GetMapping("/token/balance/{tokenId}")
+    public Result getTokenBalance(@PathVariable int tokenId) throws Exception {
+        String action = "getTokenBalance";
+        Map<String,Object> data = orderService.getTokenBalance(action,tokenId);
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), data);
     }
 
