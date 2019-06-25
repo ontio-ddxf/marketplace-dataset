@@ -5,6 +5,7 @@
 	* 2.3. [根据卖家ontid返回数据](#根据卖家ontid返回数据)
 	* 2.4. [生成dataId和dataToken](#生成dataId和dataToken)
 	* 2.5. [查询token余额](#查询token余额)
+	* 2.6. [根据dataId查询数据](#根据dataId查询数据)
 * 3. [认证接口](#认证接口)
 	* 3.1. [获取认证方列表](#获取认证方列表)
 	* 3.2. [认证人获取待认证列表](#认证人获取待认证列表)
@@ -14,7 +15,10 @@
 	* 4.2. [查询所有挂单](#查询所有挂单)
 	* 4.3. [查询自己的订单](#查询自己的订单)
 	* 4.4. [购买数据](#购买数据)
-    * 4.4. [查验数据](#查验数据)
+    * 4.5. [查看数据](#查看数据)
+    * 4.6. [查询当前tokenId](#查询当前tokenId)
+    * 4.7. [查询token剩余流转次数和访问次数](#查询token剩余流转次数和访问次数)
+    * 4.8. [二次挂单创建order](#二次挂单创建order)
 * 5. [仲裁接口](#仲裁接口)
 	* 5.1. [获取仲裁方列表](#获取仲裁方列表)
 	* 5.2. [获取待仲裁列表](#获取待仲裁列表)
@@ -124,7 +128,7 @@ method:GET
     "result": {
         "isCertificated": 0,
         "dataId": "",
-        "tokenId": "",
+        "tokenRange": "",
         "data": {
             "desc": "descrption for data",
             "img": "http://image.image.com/",
@@ -178,7 +182,7 @@ method：GET
             {
                 "isCertificated": 0,
                 "dataId": "",
-                "tokenId": "",
+                "tokenRange": "",
                 "data": {
                     "desc": "descrption for data",
                     "img": "http://image.image.com/",
@@ -301,6 +305,54 @@ method：GET
 | version   | String | 版本号                        |
 
 
+###  根据dataId查询数据
+
+```
+url：/api/v1/dataset/data/{dataId}
+method：GET
+```
+
+| Field Name | Type | Description |
+|---|---|---|
+|dataId|String|数据的dataId|
+
+响应：
+
+```source-json
+{
+    "action": "getDatabyDataId",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": {
+        "isCertificated": 0,
+        "dataId": "did:ont:AL2pVs2zwogCvBD4GdsZD6woCkJdzPZJZ5",
+        "tokenRange": "15,16",
+        "data": {
+            "desc": "descrption for data",
+            "img": "http://image.image.com/",
+            "keywords": ["keyword1","keyword2"],
+            "metadata": "metadata",
+            "name": "data name"
+        },
+        "createTime": "2019-06-03 10:59:55",
+        "certifier": "did:ont:AMbABKSWfcwCvHWuJ3XbyHAPNLsTvP6q8w",
+        "id": "fa20c972950f46cdba99ca521f0c49fa",
+        "state": 1,
+        "ontid": "did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"
+    },
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | Object | 返回数据 |
+| version   | String | 版本号        |
+
+
 ## 认证接口
 
 ###  获取认证方列表
@@ -357,7 +409,7 @@ method：GET
             {
                 "isCertificated": 0,
                 "dataId": "",
-                "tokenId": "",
+                "tokenRange": "",
                 "data": {
                     "desc": "descrption for data",
                     "img": "http://image.image.com/",
@@ -439,8 +491,12 @@ method：POST
 请求：
 ```source-json
 {
+	"id": "d0cc3f3e0855447990dde11e2ad85d88",
 	"dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
 	"tokenId": 1,
+	"name": "name for order",
+	"desc": "descrption for order",
+	"img": "http://image.image.com/",
 	"tokenHash": "0000000000000000000000000000000000000002",
 	"price": "100",
 	"providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
@@ -455,12 +511,16 @@ method：POST
 ```
 | Field Name | Type | Description |
 |---|---|---|
+|id|String|数据的id标识|
 |dataId|String|数据的dataId|
 |tokenId|String|tokenId|
+|name|String|订单名称|
+|desc|String|订单描述|
+|img|String|图片链接|
 |tokenHash|String|售卖币种hash|
 |price|String|售卖价格|
 |providerOntid|String|卖家ontid|
-|ojList|List|仲裁方备选|
+|ojList|List|仲裁方备选列表|
 |keywords|List|数据标签|
 |sigVo|Map|挂单交易签名信息|
 
@@ -684,7 +744,7 @@ method：POST
 | version   | String | 版本号                        |
 
 
-###  查验数据
+###  查看数据
 ```
 url：/api/v1/order/data
 method：POST
@@ -694,13 +754,19 @@ method：POST
 ```source-json
 {
 	"id": "D4D1FA099FD140519AA71F942465CBF9",
-	"ontid": "did:ont:AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU"
+	"ontid": "did:ont:AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
+	"sigVo": {
+		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
+		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
+		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
+	}
 }
 ```
 | Field Name | Type | Description |
 |---|---|---|
 |id|String|标识订单id，非orderId|
 |ontid|String|买家ontid|
+|sigVo|Map|查看数据消费token的交易签名|
 
 响应：
 
@@ -720,6 +786,133 @@ method：POST
 | code | int | 错误码 |
 | msg | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回数据，失败返回"" |
+| version   | String | 版本号                        |
+
+
+###  查询当前tokenId
+```
+url：/api/v1/order/token/{id}
+method：Get
+```
+| Field Name | Type | Description |
+|---|---|---|
+|id|String|数据的id,非dataId|
+
+响应：
+
+```source-json
+{
+    "action": "getCurrentTokenId",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": 15,
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | int | 成功返回当前数据的tokenId，失败返回"" |
+| version   | String | 版本号                        |
+
+
+###  查询token剩余流转次数和访问次数
+```
+url：/api/v1/order/token/balance/{tokenId}
+method：Get
+```
+| Field Name | Type | Description |
+|---|---|---|
+|tokenId|String|tokenId|
+
+响应：
+
+```source-json
+{
+    "action": "getTokenBalance",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": {
+        "accessCount": 12,
+        "transferCount": 11,
+        "expireTimeCount": 1561564800
+    },
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | int | 成功返回当前token的剩余流转次数和访问次数，失败返回"" |
+| version   | String | 版本号                        |
+
+
+###  二次挂单创建order
+```
+url：/api/v1/order/second
+method：POST
+```
+
+请求：
+```source-json
+{
+	"id": "d0cc3f3e0855447990dde11e2ad85d88",
+	"dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
+	"tokenId": 1,
+	"name": "name for order",
+	"desc": "descrption for order",
+	"img": "http://image.image.com/",
+	"tokenHash": "0000000000000000000000000000000000000002",
+	"price": "100",
+	"providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+	"ojList": ["did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1","did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"],
+	"keywords": ["keyword1","keyword2"],
+	"sigVo": {
+		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
+		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
+		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
+	}
+}
+```
+| Field Name | Type | Description |
+|---|---|---|
+|id|String|当前订单的id标识|
+|dataId|String|数据的dataId|
+|tokenId|String|tokenId|
+|name|String|订单名称|
+|desc|String|订单描述|
+|img|String|图片链接|
+|tokenHash|String|售卖币种hash|
+|price|String|售卖价格|
+|providerOntid|String|卖家ontid|
+|ojList|List|仲裁方备选列表|
+|keywords|List|数据标签|
+|sigVo|Map|挂单交易签名信息|
+
+响应：
+
+```source-json
+{
+    "action": "createSecondOrder",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": "96a5dc65ec4e6efebcae8d2a802d759c3b33ddd398c3921702949b564a33923a",
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回挂单交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
 

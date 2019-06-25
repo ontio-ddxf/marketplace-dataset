@@ -63,7 +63,7 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 
-    @ApiOperation(value="查验数据", notes="查验数据" ,httpMethod="POST")
+    @ApiOperation(value="查看数据", notes="查看数据" ,httpMethod="POST")
     @PostMapping("/data")
     public Result getData(@RequestBody CheckVo req) {
         String action = "getData";
@@ -71,7 +71,12 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), data);
     }
 
-    @ApiOperation(value="查询当前tokenId", notes="查询当前tokenId" ,httpMethod="POST")
+    /**
+     * 构造交易的时候需要tokrnId
+     * @param id
+     * @return
+     */
+    @ApiOperation(value="查询当前tokenId", notes="查询当前tokenId" ,httpMethod="GET")
     @GetMapping("/token/{id}")
     public Result getCurrentTokenId(@PathVariable String id) {
         String action = "getCurrentTokenId";
@@ -79,7 +84,7 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), tokenId);
     }
 
-    @ApiOperation(value="查询token剩余流转次数和访问次数", notes="查询token剩余流转次数和访问次数" ,httpMethod="POST")
+    @ApiOperation(value="查询token剩余流转次数和访问次数", notes="查询token剩余流转次数和访问次数" ,httpMethod="GET")
     @GetMapping("/token/balance/{tokenId}")
     public Result getTokenBalance(@PathVariable int tokenId) throws Exception {
         String action = "getTokenBalance";
@@ -87,7 +92,7 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), data);
     }
 
-    @ApiOperation(value="挂单创建order", notes="挂单创建order" ,httpMethod="POST")
+    @ApiOperation(value="二次挂单创建order", notes="二次挂单创建order" ,httpMethod="POST")
     @PostMapping("/second")
     public Result createSecondOrder(@RequestBody OrderVo orderVo) {
         String action = "createSecondOrder";

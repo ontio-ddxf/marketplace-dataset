@@ -92,7 +92,7 @@ public class OrderServiceImpl implements OrderService {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
         }
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < split.length; i++) {
             sb.append(split[i]);
             if (i != split.length - 1) {

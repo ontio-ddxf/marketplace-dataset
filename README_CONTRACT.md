@@ -4,12 +4,14 @@
 	* 2.2. [查询ONS归属](#查询ONS归属)
 * 3. [Ontid合约](#Ontid合约)
 	* 3.1. [注册dataId](#注册dataId)
-	* 3.2. [查询token余额](#查询token余额)
 * 4. [DataToken合约](#DataToken合约)
 	* 4.1. [生成dToken](#生成dToken)
-	* 4.2. [查询token余额](#查询token余额)
+	* 4.2. [消费token](#消费token)
+	* 4.2. [查询token剩余访问次数](#查询token剩余访问次数)
+	* 4.2. [查询token剩余流转次数](#查询token剩余流转次数)
+	* 4.2. [查询token过期时间](#查询token过期时间)
 * 5. [交易合约](#交易合约)
-	* 5.1. [提供方挂单](#提供方挂单)
+	* 5.1. [挂单](#挂单)
 	* 5.2. [下单](#下单)
 	* 5.3. [申请仲裁](#申请仲裁)
 	* 5.4. [仲裁判决](#仲裁判决)
@@ -168,7 +170,7 @@ Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes(con
 	"action": "invoke",
 	"params": {
 		"invokeConfig": {
-			"contractHash": "0f0929b514ddf62522a8a335b588321b2e7725bc",
+			"contractHash": "06633f64506fbf7fd4b65b422224905d362d1f55",
 			"functions": [{
 				"operation": "createTokenWithController",
 				"args": [{
@@ -190,8 +192,17 @@ Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes(con
 					"name": "name",
 					"value": "String:testName"
 				}, {
-					"name": "totalAmount",
-					"value": 100
+					"name": "amount",
+					"value": 10
+				}, {
+					"name": "transferCount",
+					"value": 10
+				}, {
+					"name": "accessCount",
+					"value": 10
+				}, {
+					"name": "expireTime",
+					"value": 0
 				}]
 			}],
 			"payer": "AeCRx2oYR4GL2djtnMLmtwezPXT1GPNTby",
@@ -217,13 +228,14 @@ Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes(con
 |index          |Integer|控制人ontid index           |
 |symbol         |String |符号                        |
 |name           |String |名称                        |
-|totalAmount    |Integer|生成token的总量             |
+|amount         |Integer|生成token的总量             |
+|transferCount  |Integer|生成token的流转次数         |
+|accessCount    |Integer|生成token的访问次数         |
+|expireTime     |Integer|过期时间(时间戳,单位:秒,0为永久)|
 
 
 
-###  查询token余额
-
-预执行交易
+###  消费token
 
 构造交易参数：
 ```
@@ -231,13 +243,10 @@ Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes(con
 	"action": "invoke",
 	"params": {
 		"invokeConfig": {
-			"contractHash": "0f0929b514ddf62522a8a335b588321b2e7725bc",
+			"contractHash": "06633f64506fbf7fd4b65b422224905d362d1f55",
 			"functions": [{
-				"operation": "balanceOf",
+				"operation": "consumeToken",
 				"args": [{
-					"name": "account",
-					"value": "Address:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"
-				}, {
 					"name": "tokenId",
 					"value": 1
 				}]
@@ -259,16 +268,128 @@ Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes(con
 |payer          |String |手续费支付方                |
 |gasLimit       |Long   |gasLimit                    |
 |gasPrice       |Long   |gasPrice                    |
-|account        |String |持有token的地址             |
 |tokenId        |Integer|生成token的id               |
 
+
+###  查询token剩余访问次数
+
+预执行交易
+
+构造交易参数：
+```
+{
+	"action": "invoke",
+	"params": {
+		"invokeConfig": {
+			"contractHash": "06633f64506fbf7fd4b65b422224905d362d1f55",
+			"functions": [{
+				"operation": "getAccessCount",
+				"args": [{
+					"name": "tokenId",
+					"value": 1
+				}]
+			}],
+			"payer": "AeCRx2oYR4GL2djtnMLmtwezPXT1GPNTby",
+			"gasLimit": 80000,
+			"gasPrice": 500
+		}
+	}
+}
+```
+
+| Field Name    | Type  | Description                |
+|---            |---    |---                         |
+|action         |String |标识为调用合约，必须是invoke|
+|contractHash   |String |合约地址                    |
+|operation      |String |合约方法名                  |
+|args           |List   |合约参数                    |
+|payer          |String |手续费支付方                |
+|gasLimit       |Long   |gasLimit                    |
+|gasPrice       |Long   |gasPrice                    |
+|tokenId        |Integer|生成token的id               |
+
+
+###  查询token剩余流转次数
+
+预执行交易
+
+构造交易参数：
+```
+{
+	"action": "invoke",
+	"params": {
+		"invokeConfig": {
+			"contractHash": "06633f64506fbf7fd4b65b422224905d362d1f55",
+			"functions": [{
+				"operation": "getTransferCount",
+				"args": [{
+					"name": "tokenId",
+					"value": 1
+				}]
+			}],
+			"payer": "AeCRx2oYR4GL2djtnMLmtwezPXT1GPNTby",
+			"gasLimit": 80000,
+			"gasPrice": 500
+		}
+	}
+}
+```
+
+| Field Name    | Type  | Description                |
+|---            |---    |---                         |
+|action         |String |标识为调用合约，必须是invoke|
+|contractHash   |String |合约地址                    |
+|operation      |String |合约方法名                  |
+|args           |List   |合约参数                    |
+|payer          |String |手续费支付方                |
+|gasLimit       |Long   |gasLimit                    |
+|gasPrice       |Long   |gasPrice                    |
+|tokenId        |Integer|生成token的id               |
+
+
+###  查询token过期时间
+
+预执行交易
+
+构造交易参数：
+```
+{
+	"action": "invoke",
+	"params": {
+		"invokeConfig": {
+			"contractHash": "06633f64506fbf7fd4b65b422224905d362d1f55",
+			"functions": [{
+				"operation": "getExpireTime",
+				"args": [{
+					"name": "tokenId",
+					"value": 1
+				}]
+			}],
+			"payer": "AeCRx2oYR4GL2djtnMLmtwezPXT1GPNTby",
+			"gasLimit": 80000,
+			"gasPrice": 500
+		}
+	}
+}
+```
+
+| Field Name    | Type  | Description                |
+|---            |---    |---                         |
+|action         |String |标识为调用合约，必须是invoke|
+|contractHash   |String |合约地址                    |
+|operation      |String |合约方法名                  |
+|args           |List   |合约参数                    |
+|payer          |String |手续费支付方                |
+|gasLimit       |Long   |gasLimit                    |
+|gasPrice       |Long   |gasPrice                    |
+|tokenId        |Integer|生成token的id               |
 
 
 
 
 ## 交易合约
 
-###  提供方挂单
+###  挂单
 
 构造交易参数：
 ```
