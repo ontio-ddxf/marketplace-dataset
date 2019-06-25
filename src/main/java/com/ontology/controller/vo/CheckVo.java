@@ -10,5 +10,6 @@ public class CheckVo {
     private String id;
     @ApiModelProperty(name="ontid",value = "ontid")
     private String ontid;
-
+    @ApiModelProperty(name="sigVo",value = "消费token交易签名")
+    private SigVo sigVo;
 }

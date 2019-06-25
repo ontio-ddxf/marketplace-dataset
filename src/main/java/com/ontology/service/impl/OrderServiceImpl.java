@@ -39,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 需要记录身份ontid，检索条件等，所以需要同步到区块事件前提前创建/修改order
+     *
      * @param action
      * @param orderVo
      * @return
@@ -66,67 +67,68 @@ public class OrderServiceImpl implements OrderService {
         String[] split = tokenRange.split(",");
         int length = split.length;
         if (length % 2 == 1) {
-            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(),ErrorInfo.DB_ERROR.descEN(),ErrorInfo.DB_ERROR.code());
+            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(), ErrorInfo.DB_ERROR.descEN(), ErrorInfo.DB_ERROR.code());
         }
         int currentTokenId = 0;
         boolean haveToken = false;
         for (int j = 0; j < (length / 2); j++) {
             int startToken = Integer.parseInt(split[j * 2]);
             int endToken = Integer.parseInt(split[j * 2 + 1]);
-            if (startToken>endToken) {
+            if (startToken > endToken) {
                 continue;
             }
             currentTokenId = startToken;
-            startToken ++;
+            startToken++;
             split[j * 2] = String.valueOf(startToken);
             haveToken = true;
+            break;
         }
-        if (currentTokenId!=tokenId) {
-            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
+        if (currentTokenId != tokenId) {
+            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
         }
 
         // 没有可用token，结束挂单
         if (!haveToken) {
-            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(),ErrorInfo.NOT_EXIST.descEN(),ErrorInfo.NOT_EXIST.code());
+            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
         }
 
         StringBuffer sb = new StringBuffer();
-        for(int i = 0; i < split.length; i++){
+        for (int i = 0; i < split.length; i++) {
             sb.append(split[i]);
-            if (i != split.length-1) {
+            if (i != split.length - 1) {
                 sb.append(",");
             }
         }
         String newRange = sb.toString();
-        Map<String,Object> map = new HashMap<>();
-        map.put("tokenRange",newRange);
+        Map<String, Object> map = new HashMap<>();
+        map.put("tokenRange", newRange);
         // 先更新dataset记录，用乐观锁控制并发及tokenId重复挂单
-        ElasticsearchUtil.updateDataByIdAndVersion(map,Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET,id,version);
+        ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
 
 
         // 先发送交易
         try {
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
             // es创建order
-            Map<String,Object> order = new LinkedHashMap<>();
-            order.put("orderId","");
-            order.put("dataId",dataId);
-            order.put("tokenId",tokenId);
-            order.put("name",name);
-            order.put("desc",desc);
-            order.put("img",img);
-            order.put("providerOntid",providerOntid);
-            order.put("demanderOntid","");
-            order.put("tokenHash",tokenHash);
-            order.put("price",price);
+            Map<String, Object> order = new LinkedHashMap<>();
+            order.put("orderId", "");
+            order.put("dataId", dataId);
+            order.put("tokenId", tokenId);
+            order.put("name", name);
+            order.put("desc", desc);
+            order.put("img", img);
+            order.put("providerOntid", providerOntid);
+            order.put("demanderOntid", "");
+            order.put("tokenHash", tokenHash);
+            order.put("price", price);
 //            order.put("amount",amount);
-            order.put("judger",JSON.toJSONString(ojList));
-            order.put("arbitrage","");
+            order.put("judger", JSON.toJSONString(ojList));
+            order.put("arbitrage", "");
             // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
             // 对应显示：1-挂单中；2-正在出售；3-购买中；4-购买成功；5-确认中；6-已确认
             // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；0-取消
             // 对应显示：1-正在出售；2-购买成功；3-已确认；4-仲裁中，5-仲裁结束
-            order.put("state","");
+            order.put("state", "");
             order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
             order.put("boughtTime", "");
             order.put("cancelTime", "");
@@ -138,9 +140,8 @@ public class OrderServiceImpl implements OrderService {
             ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
             return txHash;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
-        return null;
     }
 
     @Override
@@ -194,12 +195,19 @@ public class OrderServiceImpl implements OrderService {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         MatchQueryBuilder queryType = null;
-        if (type==1) {
+        String sort = null;
+        if (type == 1) {
             // 买家
             queryType = QueryBuilders.matchQuery("demanderOntid", ontid);
-        } else if (type==2) {
+            MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", "6");
+            boolQuery.mustNot(queryState);
+            // 买家排序
+            sort = "boughtTime.keyword";
+        } else if (type == 2) {
             // 卖家
             queryType = QueryBuilders.matchQuery("providerOntid", ontid);
+            // 卖家排序
+            sort = "createTime.keyword";
         }
         boolQuery.must(queryType);
         try {
@@ -207,7 +215,9 @@ public class OrderServiceImpl implements OrderService {
             if (!indexExist) {
                 return null;
             }
-            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, sort, null);
+
             // 判断订单是否超时:1-超时；2-未超时
             List<Map<String, Object>> recordList = esPage.getRecordList();
             for (Map<String, Object> order : recordList) {
@@ -255,12 +265,12 @@ public class OrderServiceImpl implements OrderService {
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
 
             Map<String, Object> order = new HashMap<>();
-            order.put("demanderOntid",demanderOntid);
-            order.put("judger",judger);
-            order.put("state","2");
+            order.put("demanderOntid", demanderOntid);
+            order.put("judger", judger);
+            order.put("state", "2");
             order.put("boughtTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
             order.put("expireTime", JSON.toJSONStringWithDateFormat(expireDate, "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
-            ElasticsearchUtil.updateDataById(order,Constant.ES_INDEX_ORDER,Constant.ES_TYPE_ORDER,id);
+            ElasticsearchUtil.updateDataById(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
             return txHash;
         } catch (Exception e) {
             e.printStackTrace();
@@ -272,28 +282,37 @@ public class OrderServiceImpl implements OrderService {
     public String getData(String action, CheckVo req) {
         String id = req.getId();
         String ontid = req.getOntid();
-        Map<String, Object> order = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id, null);
-        String demanderOntid = (String) order.get("demanderOntid");
-        String state = (String) order.get("state");
-        // 验证订单状态和买家身份
-        if (!demanderOntid.equals(ontid)) {
-            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
+        SigVo sigVo = req.getSigVo();
+
+        try {
+            // 先发送交易
+            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
+
+            Map<String, Object> order = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id, null);
+            String demanderOntid = (String) order.get("demanderOntid");
+            String state = (String) order.get("state");
+            // 验证订单状态和买家身份
+            if (!demanderOntid.equals(ontid)) {
+                throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
+            }
+            if ("1".equals(state)) {
+                throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
+            }
+            // 查找数据源
+            String dataId = (String) order.get("dataId");
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            MatchQueryBuilder queryToken = QueryBuilders.matchQuery("dataId", dataId);
+            boolQuery.must(queryToken);
+            List<Map<String, Object>> dataList = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
+            if (CollectionUtils.isEmpty(dataList)) {
+                throw new MarketplaceException(action, ErrorInfo.NOT_FOUND.descCN(), ErrorInfo.NOT_FOUND.descEN(), ErrorInfo.NOT_FOUND.code());
+            }
+            Map<String, Object> dataset = dataList.get(0);
+            String data = (String) dataset.get("dataSource");
+            return data;
+        } catch (Exception e) {
+            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
         }
-        if ("1".equals(state)) {
-            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
-        }
-        // 查找数据源
-        String dataId = (String) order.get("dataId");
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        MatchQueryBuilder queryToken = QueryBuilders.matchQuery("dataId", dataId);
-        boolQuery.must(queryToken);
-        List<Map<String, Object>> dataList = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
-        if (CollectionUtils.isEmpty(dataList)) {
-            throw new MarketplaceException(action, ErrorInfo.NOT_FOUND.descCN(),ErrorInfo.NOT_FOUND.descEN(),ErrorInfo.NOT_FOUND.code());
-        }
-        Map<String, Object> dataset = dataList.get(0);
-        String data = (String) dataset.get("dataSource");
-        return data;
     }
 
     @Override
@@ -303,35 +322,36 @@ public class OrderServiceImpl implements OrderService {
         String[] split = tokenRange.split(",");
         int length = split.length;
         if (length % 2 == 1) {
-            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(),ErrorInfo.DB_ERROR.descEN(),ErrorInfo.DB_ERROR.code());
+            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(), ErrorInfo.DB_ERROR.descEN(), ErrorInfo.DB_ERROR.code());
         }
         int currentTokenId = 0;
         boolean haveToken = false;
         for (int j = 0; j < (length / 2); j++) {
             int startToken = Integer.parseInt(split[j * 2]);
             int endToken = Integer.parseInt(split[j * 2 + 1]);
-            if (startToken>endToken) {
+            if (startToken > endToken) {
                 continue;
             }
             currentTokenId = startToken;
-            startToken ++;
+            startToken++;
             split[j * 2] = String.valueOf(startToken);
             haveToken = true;
+            break;
         }
 
         // 没有可用token，结束挂单
         if (!haveToken) {
-            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(),ErrorInfo.NOT_EXIST.descEN(),ErrorInfo.NOT_EXIST.code());
+            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
         }
         return currentTokenId;
     }
 
     @Override
     public Map<String, Object> getTokenBalance(String action, int tokenId) throws Exception {
-        List<Map<String,Object>> argList = new ArrayList<>();
-        Map<String,Object> map = new HashMap<>();
-        map.put("name","tokenId");
-        map.put("value",tokenId);
+        List<Map<String, Object>> argList = new ArrayList<>();
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "tokenId");
+        map.put("value", tokenId);
         argList.add(map);
         String transferCountParams = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "getTransferCount", argList, configParam.PAYER_ADDRESS);
         String accessCountParams = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "getAccessCount", argList, configParam.PAYER_ADDRESS);
@@ -343,11 +363,74 @@ public class OrderServiceImpl implements OrderService {
         String accessResult = accessObj.getString("Result");
         String expireResult = expireObj.getString("Result");
 
-        Map<String,Object> result = new HashMap<>();
-        result.put("transferCount",Long.parseLong(com.github.ontio.common.Helper.reverse(transferResult), 16));
-        result.put("accessCount",Long.parseLong(com.github.ontio.common.Helper.reverse(accessResult), 16));
-        result.put("expireTimeCount",Long.parseLong(com.github.ontio.common.Helper.reverse(expireResult), 16));
+        log.info("transferResult:{}", transferResult);
+        log.info("accessResult:{}", accessResult);
+        log.info("expireResult:{}", expireResult);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("transferCount", Helper.isEmptyOrNull(transferResult) ? 0 : Long.parseLong(com.github.ontio.common.Helper.reverse(transferResult), 16));
+        result.put("accessCount", Helper.isEmptyOrNull(accessResult) ? 0 : Long.parseLong(com.github.ontio.common.Helper.reverse(accessResult), 16));
+        result.put("expireTimeCount", Helper.isEmptyOrNull(expireResult) ? 1 : Long.parseLong(com.github.ontio.common.Helper.reverse(expireResult), 16));
         return result;
+    }
+
+    @Override
+    public String createSecondOrder(String action, OrderVo orderVo) {
+        String id = orderVo.getId();
+        String dataId = orderVo.getDataId();
+        int tokenId = orderVo.getTokenId();
+        String name = orderVo.getName();
+        String desc = orderVo.getDesc();
+        String img = orderVo.getImg();
+        String providerOntid = orderVo.getProviderOntid();
+        String tokenHash = orderVo.getTokenHash();
+        String price = orderVo.getPrice();
+        List<String> ojList = orderVo.getOjList();
+        List<String> keywords = orderVo.getKeywords();
+        SigVo sigVo = orderVo.getSigVo();
+
+        // 先发送交易
+        try {
+            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
+
+            // es创建order
+            Map<String, Object> order = new LinkedHashMap<>();
+            order.put("orderId", "");
+            order.put("dataId", dataId);
+            order.put("tokenId", tokenId);
+            order.put("name", name);
+            order.put("desc", desc);
+            order.put("img", img);
+            order.put("providerOntid", providerOntid);
+            order.put("demanderOntid", "");
+            order.put("tokenHash", tokenHash);
+            order.put("price", price);
+            order.put("judger", JSON.toJSONString(ojList));
+            order.put("arbitrage", "");
+            // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
+            // 对应显示：1-挂单中；2-正在出售；3-购买中；4-购买成功；5-确认中；6-已确认
+            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；0-取消
+            // 对应显示：1-正在出售；2-购买成功；3-已确认；4-仲裁中，5-仲裁结束
+            order.put("state", "");
+            order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
+            order.put("boughtTime", "");
+            order.put("cancelTime", "");
+            order.put("confirmTime", "");
+            order.put("expireTime", "");
+            for (int i = 0; i < keywords.size(); i++) {
+                order.put("column" + i, keywords.get(i));
+            }
+            ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
+
+            // 修改原order状态
+            Map<String, Object> origin = new HashMap<>();
+            origin.put("state","6");
+            ElasticsearchUtil.updateDataById(origin,Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER,id);
+
+            return txHash;
+        } catch (Exception e) {
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
     }
 
 }

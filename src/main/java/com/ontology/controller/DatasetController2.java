@@ -199,5 +199,21 @@ public class DatasetController2 {
         return null;
     }
 
+    @ApiOperation(value = "根据dataId查询数据", notes = "根据dataId查询数据", httpMethod = "GET")
+    @GetMapping("/data/{dataId}")
+    public Result getDatabyDataId(@PathVariable String dataId) {
+        String action = "getDatabyDataId";
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        MatchQueryBuilder queryToken = QueryBuilders.matchQuery("dataId", dataId);
+        boolQuery.must(queryToken);
+        List<Map<String, Object>> dataList = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
+        if (CollectionUtils.isEmpty(dataList)) {
+            throw new MarketplaceException(action, ErrorInfo.NOT_FOUND.descCN(), ErrorInfo.NOT_FOUND.descEN(), ErrorInfo.NOT_FOUND.code());
+        }
+        Map<String, Object> dataset = dataList.get(0);
+        ElasticsearchUtil.formatResult(dataset);
+        dataset.remove("dataSource");
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), dataset);
+    }
 
 }

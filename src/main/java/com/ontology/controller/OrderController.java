@@ -87,4 +87,12 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), data);
     }
 
+    @ApiOperation(value="挂单创建order", notes="挂单创建order" ,httpMethod="POST")
+    @PostMapping("/second")
+    public Result createSecondOrder(@RequestBody OrderVo orderVo) {
+        String action = "createSecondOrder";
+        String txHash = orderService.createSecondOrder(action,orderVo);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+    }
+
 }
