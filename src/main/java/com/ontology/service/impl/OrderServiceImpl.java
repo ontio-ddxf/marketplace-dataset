@@ -429,6 +429,7 @@ public class OrderServiceImpl implements OrderService {
 
             return txHash;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
     }
