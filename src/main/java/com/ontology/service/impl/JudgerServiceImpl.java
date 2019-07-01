@@ -9,6 +9,7 @@ import com.ontology.service.ContractService;
 import com.ontology.service.JudgerService;
 import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class JudgerServiceImpl implements JudgerService {
     @Autowired
     private JudgerMapper judgerMapper;
@@ -70,7 +72,7 @@ public class JudgerServiceImpl implements JudgerService {
             ElasticsearchUtil.updateDataById(map,Constant.ES_INDEX_ORDER,Constant.ES_TYPE_ORDER,id);
             return txHash;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("catch exception:",e);
         }
         return null;
     }

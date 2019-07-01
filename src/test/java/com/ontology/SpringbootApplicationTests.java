@@ -26,7 +26,7 @@ public class SpringbootApplicationTests {
 	@Test
 	public void contextLoads() {
 //		String tokenRange = "1,2,,,3";  [1, 2, , , 3]  5
-//		String tokenRange = "1,2,,3"; [1, 2, ,, 3]  4
+//		String tokenRange = "1,2,,3"; [1, 2, , 3]  4
 //		String tokenRange = "1,2,,";[1, 2]  2
 		String tokenRange = "1,2,,,,,";
 		String[] split = tokenRange.split(",");
@@ -37,6 +37,16 @@ public class SpringbootApplicationTests {
 	@Test
 	public void deleteIndex(){
 		ElasticsearchUtil.deleteIndex("test_index");
+	}
+
+	@Test
+	public void testCatch(){
+		try {
+			String s = null;
+			s.equals("1");
+		} catch (Exception e) {
+			log.error("catch exception:",e);
+		}
 	}
 
 	@Test

@@ -124,9 +124,7 @@ public class OrderServiceImpl implements OrderService {
 //            order.put("amount",amount);
             order.put("judger", JSON.toJSONString(ojList));
             order.put("arbitrage", "");
-            // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
-            // 对应显示：1-挂单中；2-正在出售；3-购买中；4-购买成功；5-确认中；6-已确认
-            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；0-取消
+            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果 6-转售；0-取消
             // 对应显示：1-正在出售；2-购买成功；3-已确认；4-仲裁中，5-仲裁结束
             order.put("state", "");
             order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
@@ -140,6 +138,7 @@ public class OrderServiceImpl implements OrderService {
             ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
             return txHash;
         } catch (Exception e) {
+            log.error("catch exception:", e);
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
     }
@@ -181,6 +180,7 @@ public class OrderServiceImpl implements OrderService {
             }
             return esPage;
         } catch (IndexNotFoundException e) {
+            log.error("catch exception:", e);
             ElasticsearchUtil.createIndex(Constant.ES_INDEX_ORDER);
         }
         return null;
@@ -210,44 +210,40 @@ public class OrderServiceImpl implements OrderService {
             sort = "createTime.keyword";
         }
         boolQuery.must(queryType);
-        try {
-            boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
-            if (!indexExist) {
-                return null;
-            }
 
-            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, sort, null);
+        boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
+        if (!indexExist) {
+            return null;
+        }
 
-            // 判断订单是否超时:1-超时；2-未超时
-            List<Map<String, Object>> recordList = esPage.getRecordList();
-            for (Map<String, Object> order : recordList) {
-                ElasticsearchUtil.formatOrderResult(order);
-                String expireTime = (String) order.get("expireTime");
-                if (StringUtils.isNotEmpty(expireTime)) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    Date expireDate = null;
-                    try {
-                        expireDate = sdf.parse(expireTime);
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
+        EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, sort, null);
+
+        // 判断订单是否超时:1-超时；2-未超时
+        List<Map<String, Object>> recordList = esPage.getRecordList();
+        for (Map<String, Object> order : recordList) {
+            ElasticsearchUtil.formatOrderResult(order);
+            String expireTime = (String) order.get("expireTime");
+            if (StringUtils.isNotEmpty(expireTime)) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date expireDate = null;
+                try {
+                    expireDate = sdf.parse(expireTime);
+                } catch (ParseException e) {
+                    log.error("catch exception:", e);
+                }
 //                    Date expireDate = JSON.parseObject(expireTime, Date.class);
-                    if (new Date().after(expireDate)) {
-                        // 超时
-                        order.put("isExpired", "1");
-                    } else {
-                        // 未超时
-                        order.put("isExpired", "0");
-                    }
+                if (new Date().after(expireDate)) {
+                    // 超时
+                    order.put("isExpired", "1");
                 } else {
+                    // 未超时
                     order.put("isExpired", "0");
                 }
+            } else {
+                order.put("isExpired", "0");
             }
-            return esPage;
-        } catch (IndexNotFoundException e) {
-
         }
-        return null;
+        return esPage;
     }
 
     @Override
@@ -273,9 +269,9 @@ public class OrderServiceImpl implements OrderService {
             ElasticsearchUtil.updateDataById(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
             return txHash;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("catch exception:", e);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
-        return null;
     }
 
     @Override
@@ -311,6 +307,7 @@ public class OrderServiceImpl implements OrderService {
             String data = (String) dataset.get("dataSource");
             return data;
         } catch (Exception e) {
+            log.error("catch exception:",e);
             throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
         }
     }
@@ -333,8 +330,6 @@ public class OrderServiceImpl implements OrderService {
                 continue;
             }
             currentTokenId = startToken;
-            startToken++;
-            split[j * 2] = String.valueOf(startToken);
             haveToken = true;
             break;
         }
@@ -407,9 +402,7 @@ public class OrderServiceImpl implements OrderService {
             order.put("price", price);
             order.put("judger", JSON.toJSONString(ojList));
             order.put("arbitrage", "");
-            // state:1-挂单；2-挂单上链；3-购买；4-购买上链；5-确认；6-确认上链；7-仲裁；8-仲裁上链；0-取消
-            // 对应显示：1-挂单中；2-正在出售；3-购买中；4-购买成功；5-确认中；6-已确认
-            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；0-取消
+            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；6-转售；0-取消
             // 对应显示：1-正在出售；2-购买成功；3-已确认；4-仲裁中，5-仲裁结束
             order.put("state", "");
             order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
@@ -424,12 +417,12 @@ public class OrderServiceImpl implements OrderService {
 
             // 修改原order状态
             Map<String, Object> origin = new HashMap<>();
-            origin.put("state","6");
-            ElasticsearchUtil.updateDataById(origin,Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER,id);
+            origin.put("state", "6");
+            ElasticsearchUtil.updateDataById(origin, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
 
             return txHash;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("catch exception:",e);
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
     }

@@ -154,7 +154,7 @@ public class DatasetController2 {
         Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
         Object dataId = data.get("dataId");
         if (!"".equals(dataId)) {
-            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(),ErrorInfo.NO_PERMISSION.descEN(),ErrorInfo.NO_PERMISSION.code());
+            throw new MarketplaceException(action, ErrorInfo.ALREADY_EXIST.descCN(),ErrorInfo.ALREADY_EXIST.descEN(),ErrorInfo.ALREADY_EXIST.code());
         }
         try {
             // 发送交易
@@ -170,7 +170,7 @@ public class DatasetController2 {
             ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET, id);
             return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHashList);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("catch exception:",e);
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
         }
     }
@@ -194,7 +194,7 @@ public class DatasetController2 {
             int balance = Integer.parseInt(com.github.ontio.common.Helper.reverse(jsonObject.getString("Result")), 16);
             return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), balance);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("catch exception:",e);
         }
         return null;
     }
