@@ -47,18 +47,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String createOrder(String action, OrderVo orderVo) {
         String id = orderVo.getId();
-        String dataId = orderVo.getDataId();
         int tokenId = orderVo.getTokenId();
-        String name = orderVo.getName();
-        String desc = orderVo.getDesc();
-        String img = orderVo.getImg();
-        String providerOntid = orderVo.getProviderOntid();
-        String tokenHash = orderVo.getTokenHash();
-        String price = orderVo.getPrice();
-//        Integer amount = orderVo.getAmount();
-        List<String> ojList = orderVo.getOjList();
-        List<String> keywords = orderVo.getKeywords();
-        SigVo sigVo = orderVo.getSigVo();
 
         GetResponse getResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
         long version = getResponse.getVersion();
@@ -105,43 +94,10 @@ public class OrderServiceImpl implements OrderService {
         // 先更新dataset记录，用乐观锁控制并发及tokenId重复挂单
         ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
 
-
-        // 先发送交易
-        try {
-            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
-            // es创建order
-            Map<String, Object> order = new LinkedHashMap<>();
-            order.put("orderId", "");
-            order.put("dataId", dataId);
-            order.put("tokenId", tokenId);
-            order.put("name", name);
-            order.put("desc", desc);
-            order.put("img", img);
-            order.put("providerOntid", providerOntid);
-            order.put("demanderOntid", "");
-            order.put("tokenHash", tokenHash);
-            order.put("price", price);
-//            order.put("amount",amount);
-            order.put("judger", JSON.toJSONString(ojList));
-            order.put("arbitrage", "");
-            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果 6-转售；0-取消
-            // 对应显示：1-正在出售；2-购买成功；3-已确认；4-仲裁中，5-仲裁结束
-            order.put("state", "");
-            order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
-            order.put("boughtTime", "");
-            order.put("cancelTime", "");
-            order.put("confirmTime", "");
-            order.put("expireTime", "");
-            for (int i = 0; i < keywords.size(); i++) {
-                order.put("column" + i, keywords.get(i));
-            }
-            ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
-            return txHash;
-        } catch (Exception e) {
-            log.error("catch exception:", e);
-            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
-        }
+        String txHash = createAndSendOrder(action, orderVo);
+        return txHash;
     }
+
 
     @Override
     public EsPage getAllOrder(String action, PageQueryVo req) {
@@ -231,7 +187,6 @@ public class OrderServiceImpl implements OrderService {
                 } catch (ParseException e) {
                     log.error("catch exception:", e);
                 }
-//                    Date expireDate = JSON.parseObject(expireTime, Date.class);
                 if (new Date().after(expireDate)) {
                     // 超时
                     order.put("isExpired", "1");
@@ -371,7 +326,19 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public String createSecondOrder(String action, OrderVo orderVo) {
+        String txHash = createAndSendOrder(action, orderVo);
+
+        // 修改原order状态
         String id = orderVo.getId();
+        Map<String, Object> origin = new HashMap<>();
+        origin.put("state", "6");
+        ElasticsearchUtil.updateDataById(origin, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
+
+        return txHash;
+
+    }
+
+    private String createAndSendOrder(String action, OrderVo orderVo) {
         String dataId = orderVo.getDataId();
         int tokenId = orderVo.getTokenId();
         String name = orderVo.getName();
@@ -380,6 +347,7 @@ public class OrderServiceImpl implements OrderService {
         String providerOntid = orderVo.getProviderOntid();
         String tokenHash = orderVo.getTokenHash();
         String price = orderVo.getPrice();
+//        Integer amount = orderVo.getAmount();
         List<String> ojList = orderVo.getOjList();
         List<String> keywords = orderVo.getKeywords();
         SigVo sigVo = orderVo.getSigVo();
@@ -387,7 +355,6 @@ public class OrderServiceImpl implements OrderService {
         // 先发送交易
         try {
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
-
             // es创建order
             Map<String, Object> order = new LinkedHashMap<>();
             order.put("orderId", "");
@@ -400,10 +367,10 @@ public class OrderServiceImpl implements OrderService {
             order.put("demanderOntid", "");
             order.put("tokenHash", tokenHash);
             order.put("price", price);
+//            order.put("amount",amount);
             order.put("judger", JSON.toJSONString(ojList));
             order.put("arbitrage", "");
-            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果；6-转售；0-取消
-            // 对应显示：1-正在出售；2-购买成功；3-已确认；4-仲裁中，5-仲裁结束
+            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果 6-转售；0-取消
             order.put("state", "");
             order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
             order.put("boughtTime", "");
@@ -414,15 +381,9 @@ public class OrderServiceImpl implements OrderService {
                 order.put("column" + i, keywords.get(i));
             }
             ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
-
-            // 修改原order状态
-            Map<String, Object> origin = new HashMap<>();
-            origin.put("state", "6");
-            ElasticsearchUtil.updateDataById(origin, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
-
             return txHash;
         } catch (Exception e) {
-            log.error("catch exception:",e);
+            log.error("catch exception:", e);
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
     }
