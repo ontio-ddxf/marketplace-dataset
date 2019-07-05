@@ -44,19 +44,9 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public List<String> registerDataId(String action, DataIdVo dataIdVo) throws Exception {
+    public String registerDataId(String action, DataIdVo dataIdVo) throws Exception {
         String dataIdTxHex = sdk.makeRegIdWithController(dataIdVo.getDataId(), dataIdVo.getOntid(), dataIdVo.getPubKey());
-        ContractVo contractVo = dataIdVo.getContractVo();
-        String method = contractVo.getMethod();
-        String contractHash = contractVo.getContractHash();
-        List argsList = contractVo.getArgsList();
-        String payerAddr = configParam.PAYER_ADDRESS;
-        String params = Helper.getParams("", contractHash, method, argsList, payerAddr);
-        String tokenIdTxHex = (String) sdk.makeTransaction(params);
-        List<String> txList = new ArrayList<>();
-        txList.add(dataIdTxHex);
-        txList.add(tokenIdTxHex);
-        return txList;
+        return dataIdTxHex;
     }
 
     @Override

@@ -23,4 +23,6 @@ public interface OrderService {
     Map<String, Object> getTokenBalance(String action, int tokenId) throws Exception;
 
     String createSecondOrder(String action, OrderVo orderVo);
+
+    String purchaseSecondOrder(String action, PurchaseVo purchaseVo);
 }

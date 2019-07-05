@@ -23,10 +23,10 @@ public class OrderController {
     private OrderService orderService;
 
 
-    @ApiOperation(value="挂单创建order", notes="挂单创建order" ,httpMethod="POST")
+    @ApiOperation(value="挂单授权MP生成token", notes="挂单授权MP生成token" ,httpMethod="POST")
     @PostMapping
     public Result createOrder(@RequestBody OrderVo orderVo) {
-        String action = "createOrder";
+        String action = "authOrder";
         String txHash = orderService.createOrder(action,orderVo);
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
@@ -97,6 +97,14 @@ public class OrderController {
     public Result createSecondOrder(@RequestBody OrderVo orderVo) {
         String action = "createSecondOrder";
         String txHash = orderService.createSecondOrder(action,orderVo);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+    }
+
+    @ApiOperation(value="购买二手商品", notes="购买二手商品" ,httpMethod="POST")
+    @PostMapping("/purchase/second")
+    public Result purchaseSecondOrder(@RequestBody PurchaseVo purchaseVo) {
+        String action = "purchaseSecondOrder";
+        String txHash = orderService.purchaseSecondOrder(action,purchaseVo);
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 

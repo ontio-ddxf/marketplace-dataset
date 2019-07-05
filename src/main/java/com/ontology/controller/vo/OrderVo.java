@@ -12,19 +12,19 @@ public class OrderVo {
     @ApiModelProperty(name="dataId",value = "dataId")
     private String dataId;
     @ApiModelProperty(name="tokenId",value = "tokenId")
-    private int tokenId;
+    private String tokenId;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String name;
     @ApiModelProperty(name="tokenId",value = "tokenId")
     private String desc;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String img;
-    @ApiModelProperty(name="tokenHash",value = "tokenHash")
-    private String tokenHash;
+    @ApiModelProperty(name="token",value = "token")
+    private String token;
     @ApiModelProperty(name="price",value = "价格")
     private String price;
-//    @ApiModelProperty(name="amount",value = "数量")
-//    private Integer amount;
+    @ApiModelProperty(name="amount",value = "数量")
+    private Integer amount;
     @ApiModelProperty(name="providerOntid",value = "卖家ontid")
     private String providerOntid;
     @ApiModelProperty(name="ojList",value = "仲裁者地址列表")

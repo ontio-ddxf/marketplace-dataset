@@ -11,6 +11,4 @@ public class DataIdVo {
     private String ontid;
     @ApiModelProperty(name="pubKey",value = "pubKey")
     private Integer pubKey;
-    @ApiModelProperty(name="contractVo",value = "生成dToken的合约参数")
-    private ContractVo contractVo;
 }

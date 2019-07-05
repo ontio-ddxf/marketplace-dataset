@@ -64,11 +64,14 @@ public class DatasetController2 {
         String date = JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", "");
         obj.put("id", id);
         obj.put("dataId", "");
-        obj.put("tokenRange", "");
-        obj.put("ontid", ontid);
+        obj.put("authId", "");
+        obj.put("provider", ontid);
+        obj.put("token", "");
+        obj.put("price", "");
         obj.put("createTime", date);
         obj.put("certifier", certifier);
         obj.put("isCertificated", 0);
+        obj.put("judger", "");
         obj.put("data",JSON.toJSONString(data));
         obj.put("dataSource", dataSource);
         for (int i = 0; i < keywords.size(); i++) {
@@ -84,7 +87,7 @@ public class DatasetController2 {
             exist = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
         }
         if (exist == null) {
-            // 新增数据 state:0-未上传；1-已上传（生成tokenId）
+            // 新增数据 state:0-未上传；1-已上传（生成dataId）；2-挂单；3-撤单；4-售完
             obj.put("state", 0);
             ElasticsearchUtil.addData(obj, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
         } else {
@@ -145,10 +148,10 @@ public class DatasetController2 {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), esPage);
     }
 
-    @ApiOperation(value = "卖家生成dataId和dataToken", notes = "卖家生成dataId和dataToken", httpMethod = "POST")
-    @PostMapping("/tokenId")
+    @ApiOperation(value = "卖家生成dataId", notes = "卖家生成dataId", httpMethod = "POST")
+    @PostMapping("/dataId")
     public Result createDataIdAndTokenId(@RequestBody TokenIdVo req) {
-        String action = "createDataIdAndTokenId";
+        String action = "createDataId";
 
         String id = req.getId();
         Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
@@ -158,17 +161,14 @@ public class DatasetController2 {
         }
         try {
             // 发送交易
-            String dataIdTxHash = contractService.sendSyncTransaction(action, req.getSigDataVo());
-            String tokenIdTxHash = contractService.sendTransaction(action, req.getSigTokenVo());
-            List<String> txHashList = new ArrayList<>();
-            txHashList.add(dataIdTxHash);
-            txHashList.add(tokenIdTxHash);
+            String dataIdTxHash = contractService.sendTransaction(action, req.getSigDataVo());
+
             // 本地存储
             Map<String,Object> dataset = new HashMap<>();
             dataset.put("dataId",req.getDataId());
             dataset.put("state",1);
             ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET, id);
-            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHashList);
+            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), dataIdTxHash);
         } catch (Exception e) {
             log.error("catch exception:",e);
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());

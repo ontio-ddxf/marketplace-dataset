@@ -39,11 +39,11 @@ public class ContractController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 
-    @ApiOperation(value="注册dataId和tokenId", notes="注册dataId和tokenId" ,httpMethod="POST")
+    @ApiOperation(value="注册dataId", notes="注册dataId" ,httpMethod="POST")
     @PostMapping(value = "/dataid")
     public Result dataid(@RequestBody DataIdVo dataIdVo) throws Exception {
         String action = "registerDataId";
-        List<String> txHex = contractService.registerDataId(action,dataIdVo);
+        String txHex = contractService.registerDataId(action,dataIdVo);
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHex);
     }
 

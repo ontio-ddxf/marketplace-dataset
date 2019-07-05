@@ -38,7 +38,7 @@ public class OrderServiceImpl implements OrderService {
     private SDKUtil sdkUtil;
 
     /**
-     * 需要记录身份ontid，检索条件等，所以需要同步到区块事件前提前创建/修改order
+     * 修改dataset表状态代表上架
      *
      * @param action
      * @param orderVo
@@ -47,55 +47,34 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String createOrder(String action, OrderVo orderVo) {
         String id = orderVo.getId();
-        int tokenId = orderVo.getTokenId();
+        String token = orderVo.getToken();
+        String price = orderVo.getPrice();
+        Integer amount = orderVo.getAmount();
+        List<String> ojList = orderVo.getOjList();
+        SigVo sigVo = orderVo.getSigVo();
 
-        GetResponse getResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
-        long version = getResponse.getVersion();
-        Map<String, Object> data = getResponse.getSource();
-        String tokenRange = (String) data.get("tokenRange");
-        String[] split = tokenRange.split(",");
-        int length = split.length;
-        if (length % 2 == 1) {
-            throw new MarketplaceException(action, ErrorInfo.DB_ERROR.descCN(), ErrorInfo.DB_ERROR.descEN(), ErrorInfo.DB_ERROR.code());
-        }
-        int currentTokenId = 0;
-        boolean haveToken = false;
-        for (int j = 0; j < (length / 2); j++) {
-            int startToken = Integer.parseInt(split[j * 2]);
-            int endToken = Integer.parseInt(split[j * 2 + 1]);
-            if (startToken > endToken) {
-                continue;
-            }
-            currentTokenId = startToken;
-            startToken++;
-            split[j * 2] = String.valueOf(startToken);
-            haveToken = true;
-            break;
-        }
-        if (currentTokenId != tokenId) {
+        GetResponse response = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        long version = response.getVersion();
+        Map<String, Object> data = response.getSource();
+        String state = (String) data.get("state");
+        if ("0".equals(state) || "2".equals(state)) {
             throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
         }
+        try {
+            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
 
-        // 没有可用token，结束挂单
-        if (!haveToken) {
-            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
+            Map<String, Object> map = new HashMap<>();
+            map.put("state", "2");
+            map.put("token", token);
+            map.put("price", price);
+            map.put("amount", amount);
+            map.put("judger", JSON.toJSONString(ojList));
+            ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
+            return txHash;
+        } catch (Exception e) {
+            log.error("catch exception:", e);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < split.length; i++) {
-            sb.append(split[i]);
-            if (i != split.length - 1) {
-                sb.append(",");
-            }
-        }
-        String newRange = sb.toString();
-        Map<String, Object> map = new HashMap<>();
-        map.put("tokenRange", newRange);
-        // 先更新dataset记录，用乐观锁控制并发及tokenId重复挂单
-        ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
-
-        String txHash = createAndSendOrder(action, orderVo);
-        return txHash;
     }
 
 
@@ -118,19 +97,22 @@ public class OrderServiceImpl implements OrderService {
             MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("column" + vo.getColumnIndex(), vo.getText()).minimumShouldMatch(vo.getPercent() + "%");
             boolQuery.must(queryBuilder);
         }
-        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", "1");
+        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", "2");
         boolQuery.must(queryState);
+        MatchQueryBuilder queryAuthId = QueryBuilders.matchQuery("authId.keyword", "");
+        boolQuery.mustNot(queryAuthId);
         try {
             // 查询索引是否存在，不存在直接返回空
-            boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
+            boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_DATASET);
             if (!indexExist) {
                 return null;
             }
-            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_INDEX_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
 
             List<Map<String, Object>> recordList = esPage.getRecordList();
             for (Map<String, Object> result : recordList) {
                 ElasticsearchUtil.formatOrderResult(result);
+                result.remove("dataSource");
                 JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
                 result.put("judger", judger);
             }
@@ -154,18 +136,19 @@ public class OrderServiceImpl implements OrderService {
         String sort = null;
         if (type == 1) {
             // 买家
-            queryType = QueryBuilders.matchQuery("demanderOntid", ontid);
+            queryType = QueryBuilders.matchQuery("demander", ontid);
             MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", "6");
             boolQuery.mustNot(queryState);
-            // 买家排序
             sort = "boughtTime.keyword";
         } else if (type == 2) {
             // 卖家
-            queryType = QueryBuilders.matchQuery("providerOntid", ontid);
-            // 卖家排序
+            queryType = QueryBuilders.matchQuery("provider", ontid);
             sort = "createTime.keyword";
         }
         boolQuery.must(queryType);
+
+        MatchQueryBuilder queryOrderId = QueryBuilders.matchQuery("orderId.keyword", "");
+        boolQuery.mustNot(queryOrderId);
 
         boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
         if (!indexExist) {
@@ -204,30 +187,33 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String purchase(String action, PurchaseVo req) {
         String id = req.getId();
-        String demanderOntid = req.getDemanderOntid();
+        String demander = req.getDemanderOntid();
+        String demanderAddress = req.getDemanderAddress();
         String judger = req.getJudger();
-        Integer expireTime = 10;
-        long i = new Date().getTime() + (expireTime * 60 * 1000);
-        Date expireDate = new Date(i);
         SigVo sigVo = req.getSigVo();
+        String name = req.getName();
+        String desc = req.getDesc();
+        String img = req.getImg();
+        List<String> keywords = req.getKeywords();
 
-        try {
-            // 先发送交易
-            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
+        Integer expireTime = 10;
+        long time = new Date().getTime() + (expireTime * 60 * 1000);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String expireDate = sdf.format(new Date(time));
+        String createTime = sdf.format(new Date());
 
-            Map<String, Object> order = new HashMap<>();
-            order.put("demanderOntid", demanderOntid);
-            order.put("judger", judger);
-            order.put("state", "2");
-            order.put("boughtTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
-            order.put("expireTime", JSON.toJSONStringWithDateFormat(expireDate, "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
-            ElasticsearchUtil.updateDataById(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
-            return txHash;
-        } catch (Exception e) {
-            log.error("catch exception:", e);
-            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
-        }
+        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_INDEX_DATASET, id, null);
+        String authId = (String) data.get("authId");
+        String dataId = (String) data.get("dataId");
+        String provider = (String) data.get("ontid");
+        String token = (String) data.get("token");
+        String price = (String) data.get("price");
+
+        String txHash = sendAndCreateOrder(action,sigVo,"",authId,dataId,name,desc,img,provider,demander,demanderAddress,
+                token,price,judger,"2",createTime,createTime,expireDate,keywords);
+        return txHash;
     }
+
 
     @Override
     public String getData(String action, CheckVo req) {
@@ -326,7 +312,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public String createSecondOrder(String action, OrderVo orderVo) {
-        String txHash = createAndSendOrder(action, orderVo);
+        String dataId = orderVo.getDataId();
+        String tokenId = orderVo.getTokenId();
+        String name = orderVo.getName();
+        String desc = orderVo.getDesc();
+        String img = orderVo.getImg();
+        String providerOntid = orderVo.getProviderOntid();
+        String token = orderVo.getToken();
+        String price = orderVo.getPrice();
+//        Integer amount = orderVo.getAmount();
+        List<String> ojList = orderVo.getOjList();
+        List<String> keywords = orderVo.getKeywords();
+        SigVo sigVo = orderVo.getSigVo();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String createTime = sdf.format(new Date());
+
+        String txHash = sendAndCreateOrder(action,sigVo,tokenId,"",dataId,name,desc,img,providerOntid,"","",token,price,JSON.toJSONString(ojList),"1",createTime,"","",keywords);
 
         // 修改原order状态
         String id = orderVo.getId();
@@ -338,45 +339,62 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
-    private String createAndSendOrder(String action, OrderVo orderVo) {
-        String dataId = orderVo.getDataId();
-        int tokenId = orderVo.getTokenId();
-        String name = orderVo.getName();
-        String desc = orderVo.getDesc();
-        String img = orderVo.getImg();
-        String providerOntid = orderVo.getProviderOntid();
-        String tokenHash = orderVo.getTokenHash();
-        String price = orderVo.getPrice();
-//        Integer amount = orderVo.getAmount();
-        List<String> ojList = orderVo.getOjList();
-        List<String> keywords = orderVo.getKeywords();
-        SigVo sigVo = orderVo.getSigVo();
+    @Override
+    public String purchaseSecondOrder(String action, PurchaseVo purchaseVo) {
+        String id = purchaseVo.getId();
+        String demander = purchaseVo.getDemanderOntid();
+        String demanderAddress = purchaseVo.getDemanderAddress();
+        SigVo sigVo = purchaseVo.getSigVo();
+        Integer expireTime = 10;
+        long time = new Date().getTime() + (expireTime * 60 * 1000);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String expireDate = sdf.format(new Date(time));
+        String boughtTime = sdf.format(new Date());
 
-        // 先发送交易
         try {
             String txHash = contractService.sendTransaction("snedTransaction", sigVo);
-            // es创建order
+            Map<String, Object> order = new HashMap<>();
+            order.put("demander", demander);
+            order.put("demanderAddress", demanderAddress);
+            order.put("boughtTime", boughtTime);
+            order.put("expireTime", expireDate);
+            order.put("state", "2");
+            ElasticsearchUtil.updateDataById(order,Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER,id);
+            return txHash;
+        } catch (Exception e) {
+            log.error("catch exception:", e);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
+    }
+
+    private String sendAndCreateOrder(String action, SigVo sigVo, String tokenId, String authId, String dataId, String name, String desc,
+                                      String img, String provider, String demander, String demanderAddress, String token, String price,
+                                      String judger, String state, String createTime, String boughtTime, String expireTime, List<String> keywords) {
+        try {
+            // 先发送交易
+            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
+
             Map<String, Object> order = new LinkedHashMap<>();
             order.put("orderId", "");
-            order.put("dataId", dataId);
             order.put("tokenId", tokenId);
+            order.put("authId", authId);
+            order.put("dataId", dataId);
             order.put("name", name);
             order.put("desc", desc);
             order.put("img", img);
-            order.put("providerOntid", providerOntid);
-            order.put("demanderOntid", "");
-            order.put("tokenHash", tokenHash);
+            order.put("provider", provider);
+            order.put("demander", demander);
+            order.put("demanderAddress", demanderAddress);
+            order.put("token", token);
             order.put("price", price);
-//            order.put("amount",amount);
-            order.put("judger", JSON.toJSONString(ojList));
+            order.put("judger", judger);
             order.put("arbitrage", "");
-            // state:1-挂单；2-购买；3-确认；4-仲裁；5-仲裁结果 6-转售；0-取消
-            order.put("state", "");
-            order.put("createTime", JSON.toJSONStringWithDateFormat(new Date(), "yyyy-MM-dd HH:mm:ss").replace("\"", ""));
-            order.put("boughtTime", "");
+            order.put("state", state);
+            order.put("createTime", createTime);
+            order.put("boughtTime", boughtTime);
+            order.put("expireTime", expireTime);
             order.put("cancelTime", "");
             order.put("confirmTime", "");
-            order.put("expireTime", "");
             for (int i = 0; i < keywords.size(); i++) {
                 order.put("column" + i, keywords.get(i));
             }

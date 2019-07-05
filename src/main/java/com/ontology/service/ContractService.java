@@ -13,7 +13,7 @@ public interface ContractService {
 
     String sendTransaction(String action, SigVo sigVo) throws Exception;
 
-    List<String>  registerDataId(String action, DataIdVo dataIdVo) throws Exception;
+    String  registerDataId(String action, DataIdVo dataIdVo) throws Exception;
 
     String sendSyncTransaction(String action, SigVo sigDataVo) throws Exception;
 }

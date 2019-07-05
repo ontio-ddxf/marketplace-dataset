@@ -3,7 +3,7 @@
 	* 2.1. [插入或根据id更新数据到ElasticSearch](#插入或根据id更新数据到ElasticSearch)
 	* 2.2. [根据ID返回数据](#根据ID返回数据)
 	* 2.3. [根据卖家ontid返回数据](#根据卖家ontid返回数据)
-	* 2.4. [生成dataId和dataToken](#生成dataId和dataToken)
+	* 2.4. [生成dataId](#生成dataId)
 	* 2.5. [查询token余额](#查询token余额)
 	* 2.6. [根据dataId查询数据](#根据dataId查询数据)
 * 3. [认证接口](#认证接口)
@@ -11,7 +11,7 @@
 	* 3.2. [认证人获取待认证列表](#认证人获取待认证列表)
 	* 3.3. [认证数据](#认证数据)
 * 4. [订单接口](#订单接口)
-	* 4.1. [挂单创建order](#挂单创建order)
+	* 4.1. [挂单授权MP生成token](#挂单授权MP生成token)
 	* 4.2. [查询所有挂单](#查询所有挂单)
 	* 4.3. [查询自己的订单](#查询自己的订单)
 	* 4.4. [购买数据](#购买数据)
@@ -214,10 +214,10 @@ method：GET
 | version   | String | 版本号                        |
 
 
-###  生成dataId和dataToken
+###  生成dataId
 
 ```
-url：/api/v1/dataset/tokenId
+url：/api/v1/dataset/dataId
 method：POST
 ```
 
@@ -231,11 +231,6 @@ method：POST
 		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
 		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
 		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
-	},
-	"sigTokenVo": {
-		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
-		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
-		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
 	}
 }
 
@@ -246,7 +241,6 @@ method：POST
 |id|String|数据id|
 |dataId|String|为数据生成的dataId|
 |sigDataVo|Map|注册dataId交易签名|
-|sigTokenVo|Map|生成tokenId交易签名|
 |txHex|String|交易hex|
 |pubKeys|String|签名公钥|
 |sigData|String|签名数据|
@@ -255,10 +249,10 @@ method：POST
 
 ```source-json
 {
-    "action": "createDataIdAndTokenId",
+    "action": "createDataId",
     "code": 0,
     "msg": "SUCCESS",
-    "result": ["7d7c4f01e0fa3c3203424644697b8d2266f337fb25b3ae89bc9575194a5d5ce7","5e359e5b5ca2e47bbca4f3c4d10596dcd0af5852ecf16d2d5d1ff45b51b842a2"],
+    "result": "7d7c4f01e0fa3c3203424644697b8d2266f337fb25b3ae89bc9575194a5d5ce7",
     "version": "v1"
 }
 ```
@@ -482,7 +476,7 @@ method：POST
 
 ## 订单接口
 
-###  挂单创建order
+###  挂单授权MP生成token
 ```
 url：/api/v1/order
 method：POST
@@ -492,16 +486,10 @@ method：POST
 ```source-json
 {
 	"id": "d0cc3f3e0855447990dde11e2ad85d88",
-	"dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
-	"tokenId": 1,
-	"name": "name for order",
-	"desc": "descrption for order",
-	"img": "http://image.image.com/",
-	"tokenHash": "0000000000000000000000000000000000000002",
+	"token": "ong",
 	"price": "100",
-	"providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+	"amount":10,
 	"ojList": ["did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1","did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"],
-	"keywords": ["keyword1","keyword2"],
 	"sigVo": {
 		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
 		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
@@ -512,16 +500,10 @@ method：POST
 | Field Name | Type | Description |
 |---|---|---|
 |id|String|数据的id标识|
-|dataId|String|数据的dataId|
-|tokenId|String|tokenId|
-|name|String|订单名称|
-|desc|String|订单描述|
-|img|String|图片链接|
-|tokenHash|String|售卖币种hash|
+|token|String|售卖币种|
 |price|String|售卖价格|
-|providerOntid|String|卖家ontid|
+|amount|int|售卖数量|
 |ojList|List|仲裁方备选列表|
-|keywords|List|数据标签|
 |sigVo|Map|挂单交易签名信息|
 
 响应：
@@ -706,8 +688,12 @@ method：POST
 {
 	"id": "D4D1FA099FD140519AA71F942465CBF9",
 	"demanderOntid": "did:ont:AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
+	"demanderAddress": "AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
 	"judger": "did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1",
-	"expireTime": 15,
+	"name": "name for order",
+    "desc": "descrption for order",
+    "img": "http://image.image.com/",
+    "keywords": ["keyword1","keyword2"],
 	"sigVo": {
 		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
 		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
@@ -717,11 +703,15 @@ method：POST
 ```
 | Field Name | Type | Description |
 |---|---|---|
-|id|String|标识订单id，非orderId|
+|id|String|标识数据的id|
 |demanderOntid|String|买家ontid|
 |judger|String|选取的仲裁方|
 |expireTime|Integer|订单超时天数|
 |sigVo|Map|购买交易的签名信息|
+|name|String|订单名称|
+|desc|String|订单描述|
+|img|String|图片链接|
+|keywords|List|数据标签|
 
 响应：
 
