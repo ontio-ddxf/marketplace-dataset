@@ -125,6 +125,36 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public String purchase(String action, PurchaseVo req) {
+        String id = req.getId();
+        String demander = req.getDemanderOntid();
+        String demanderAddress = req.getDemanderAddress();
+        String judger = req.getJudger();
+        SigVo sigVo = req.getSigVo();
+        String name = req.getName();
+        String desc = req.getDesc();
+        String img = req.getImg();
+        List<String> keywords = req.getKeywords();
+
+        Integer expireTime = 10;
+        long time = new Date().getTime() + (expireTime * 60 * 1000);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String expireDate = sdf.format(new Date(time));
+        String createTime = sdf.format(new Date());
+
+        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_INDEX_DATASET, id, null);
+        String authId = (String) data.get("authId");
+        String dataId = (String) data.get("dataId");
+        String provider = (String) data.get("ontid");
+        String token = (String) data.get("token");
+        String price = (String) data.get("price");
+
+        String txHash = sendAndCreateOrder(action,sigVo,"",authId,dataId,name,desc,img,provider,demander,demanderAddress,
+                token,price,judger,"2",createTime,createTime,expireDate,keywords);
+        return txHash;
+    }
+
+    @Override
     public EsPage findSelfOrder(String action, SelfOrderVo req) {
         Integer pageNum = req.getPageNum();
         Integer pageSize = req.getPageSize();
@@ -183,37 +213,6 @@ public class OrderServiceImpl implements OrderService {
         }
         return esPage;
     }
-
-    @Override
-    public String purchase(String action, PurchaseVo req) {
-        String id = req.getId();
-        String demander = req.getDemanderOntid();
-        String demanderAddress = req.getDemanderAddress();
-        String judger = req.getJudger();
-        SigVo sigVo = req.getSigVo();
-        String name = req.getName();
-        String desc = req.getDesc();
-        String img = req.getImg();
-        List<String> keywords = req.getKeywords();
-
-        Integer expireTime = 10;
-        long time = new Date().getTime() + (expireTime * 60 * 1000);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String expireDate = sdf.format(new Date(time));
-        String createTime = sdf.format(new Date());
-
-        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_INDEX_DATASET, id, null);
-        String authId = (String) data.get("authId");
-        String dataId = (String) data.get("dataId");
-        String provider = (String) data.get("ontid");
-        String token = (String) data.get("token");
-        String price = (String) data.get("price");
-
-        String txHash = sendAndCreateOrder(action,sigVo,"",authId,dataId,name,desc,img,provider,demander,demanderAddress,
-                token,price,judger,"2",createTime,createTime,expireDate,keywords);
-        return txHash;
-    }
-
 
     @Override
     public String getData(String action, CheckVo req) {
@@ -340,10 +339,56 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public EsPage findSecondOrder(String action, PageQueryVo req) {
+        Integer pageNum = req.getPageNum();
+        Integer pageSize = req.getPageSize();
+        List<QueryVo> queryParams = req.getQueryParams();
+
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        for (QueryVo vo : queryParams) {
+            if (StringUtils.isEmpty(vo.getText())) {
+                continue;
+            }
+            if (vo.getPercent() > 100) {
+                vo.setPercent(100);
+            } else if (vo.getPercent() < 0) {
+                vo.setPercent(0);
+            }
+            MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("column" + vo.getColumnIndex(), vo.getText()).minimumShouldMatch(vo.getPercent() + "%");
+            boolQuery.must(queryBuilder);
+        }
+        MatchQueryBuilder queryState = QueryBuilders.matchQuery("state", "1");
+        boolQuery.must(queryState);
+        MatchQueryBuilder queryAuthId = QueryBuilders.matchQuery("authId.keyword", "");
+        boolQuery.must(queryAuthId);
+        try {
+            // 查询索引是否存在，不存在直接返回空
+            boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_ORDER);
+            if (!indexExist) {
+                return null;
+            }
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_INDEX_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+
+            List<Map<String, Object>> recordList = esPage.getRecordList();
+            for (Map<String, Object> result : recordList) {
+                ElasticsearchUtil.formatOrderResult(result);
+                JSONArray judger = JSONArray.parseArray((String) result.get("judger"));
+                result.put("judger", judger);
+            }
+            return esPage;
+        } catch (IndexNotFoundException e) {
+            log.error("catch exception:", e);
+            ElasticsearchUtil.createIndex(Constant.ES_INDEX_ORDER);
+        }
+        return null;
+    }
+
+    @Override
     public String purchaseSecondOrder(String action, PurchaseVo purchaseVo) {
         String id = purchaseVo.getId();
         String demander = purchaseVo.getDemanderOntid();
         String demanderAddress = purchaseVo.getDemanderAddress();
+        String judger = purchaseVo.getJudger();
         SigVo sigVo = purchaseVo.getSigVo();
         Integer expireTime = 10;
         long time = new Date().getTime() + (expireTime * 60 * 1000);
@@ -356,6 +401,7 @@ public class OrderServiceImpl implements OrderService {
             Map<String, Object> order = new HashMap<>();
             order.put("demander", demander);
             order.put("demanderAddress", demanderAddress);
+            order.put("judger", judger);
             order.put("boughtTime", boughtTime);
             order.put("expireTime", expireDate);
             order.put("state", "2");

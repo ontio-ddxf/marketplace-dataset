@@ -12,9 +12,9 @@ public interface OrderService {
 
     EsPage getAllOrder(String action, PageQueryVo req);
 
-    EsPage findSelfOrder(String action, SelfOrderVo req);
-
     String purchase(String action, PurchaseVo req);
+
+    EsPage findSelfOrder(String action, SelfOrderVo req);
 
     String getData(String action, CheckVo req);
 
@@ -24,5 +24,8 @@ public interface OrderService {
 
     String createSecondOrder(String action, OrderVo orderVo);
 
+    EsPage findSecondOrder(String action, PageQueryVo req);
+
     String purchaseSecondOrder(String action, PurchaseVo purchaseVo);
+
 }

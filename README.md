@@ -19,6 +19,8 @@
     * 4.6. [查询当前tokenId](#查询当前tokenId)
     * 4.7. [查询token剩余流转次数和访问次数](#查询token剩余流转次数和访问次数)
     * 4.8. [二次挂单创建order](#二次挂单创建order)
+    * 4.9. [查询二手商品](#查询二手商品)
+    * 4.10. [购买二手商品](#购买二手商品)
 * 5. [仲裁接口](#仲裁接口)
 	* 5.1. [获取仲裁方列表](#获取仲裁方列表)
 	* 5.2. [获取待仲裁列表](#获取待仲裁列表)
@@ -26,7 +28,7 @@
 * 6. [合约调用接口](#合约调用接口)
 	* 6.1. [构造交易](#构造交易)
 	* 6.2. [发送交易](#发送交易)
-	* 6.3. [注册dataId和tokenId](#注册dataId和tokenId)
+	* 6.3. [注册dataId](#注册dataId)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -570,9 +572,8 @@ method：POST
             {
                 "keywords":["keyword1","keyword2"],
                 "tokenId": "1",
-                "orderId": "ba24bb9d3dee415e9c9c12acaf78c973",
                 "confirmTime": "",
-                "tokenHash": "0000000000000000000000000000000000000002",
+                "token": "ong",
                 "boughtTime": "",
                 "expireTime": "",
                 "dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
@@ -858,7 +859,7 @@ method：POST
 	"name": "name for order",
 	"desc": "descrption for order",
 	"img": "http://image.image.com/",
-	"tokenHash": "0000000000000000000000000000000000000002",
+	"token": "ong",
 	"price": "100",
 	"providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
 	"ojList": ["did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1","did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"],
@@ -878,7 +879,7 @@ method：POST
 |name|String|订单名称|
 |desc|String|订单描述|
 |img|String|图片链接|
-|tokenHash|String|售卖币种hash|
+|token|String|售卖币种|
 |price|String|售卖价格|
 |providerOntid|String|卖家ontid|
 |ojList|List|仲裁方备选列表|
@@ -903,6 +904,132 @@ method：POST
 | code | int | 错误码 |
 | msg | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回挂单交易hash，失败返回"" |
+| version   | String | 版本号                        |
+
+###  查询二手商品
+```
+url：/api/v1/order/all/second
+method：POST
+```
+
+请求：
+```source-json
+{
+	"pageNum": 0,
+	"pageSize": 5,
+	"queryParams": [{
+		"text": "keyword1",
+		"columnIndex": 0,
+		"percent": 100
+	}, {
+		"text": "keyword2",
+		"columnIndex": 1,
+		"percent": 100
+	}]
+}
+```
+| Field Name | Type | Description |
+|---|---|---|
+|pageNum|Integer|起始页|
+|pageSize|Integer|每页记录数|
+|queryParams|List|查询条件|
+
+响应：
+
+```source-json
+{
+    "action": "findSecondOrder",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": {
+        "currentPage": 0,
+        "pageSize": 5,
+        "recordCount": 1,
+        "recordList": [
+            {
+                "keywords":["keyword1","keyword2"],
+                "tokenId": "1",
+                "orderId": "ba24bb9d3dee415e9c9c12acaf78c973",
+                "confirmTime": "",
+                "token": "ong",
+                "boughtTime": "",
+                "expireTime": "",
+                "dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
+                "createTime": "2019-06-03 15:10:28",
+                "cancelTime": "",
+                "price": "100",
+                "demanderOntid": "",
+                "judger": [
+                    "did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1",
+                    "did:ont:AFsPutgDdVujxQe7KBqfK9Jom8AFMGB2x8"
+                ],
+                "providerOntid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
+                "state": "1",
+                "id": "D4D1FA099FD140519AA71F942465CBF9"
+            }
+        ],
+        "pageCount": 1,
+        "beginPageIndex": 1,
+        "endPageIndex": 1
+    },
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回已挂单数据，失败返回"" |
+| version   | String | 版本号                        |
+
+###  购买二手商品
+```
+url：/api/v1/order/purchase
+method：POST
+```
+
+请求：
+```source-json
+{
+	"id": "D4D1FA099FD140519AA71F942465CBF9",
+	"demanderOntid": "did:ont:AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
+	"demanderAddress": "AMZvjuJNxD21uVgJ5c8VDdGUiT4TudtLFU",
+	"judger": "did:ont:AJYEUcQi9jp157QXNWpKybwkCVSTuTNsh1",
+	"sigVo": {
+		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
+		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
+		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
+	}
+}
+```
+| Field Name | Type | Description |
+|---|---|---|
+|id|String|标识数据的id|
+|demanderOntid|String|买家ontid|
+|judger|String|选取的仲裁方|
+|expireTime|Integer|订单超时天数|
+|sigVo|Map|购买交易的签名信息|
+
+响应：
+
+```source-json
+{
+    "action": "purchaseSecondOrder",
+    "code": 0,
+    "msg": "SUCCESS",
+    "result": "85f50a7c1c25632bdf1ae6708e9233c7ea1169336bcf5f14b8d926c3e99a76ec",
+    "version": "v1"
+}
+```
+
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| code | int | 错误码 |
+| msg | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
 
@@ -1127,7 +1254,7 @@ method：POST
 | version   | String | 版本号                        |
 
 
-###  注册dataId和tokenId
+###  注册dataId
 ```
 url：/api/v1/contract/dataid
 method：POST
@@ -1137,34 +1264,7 @@ method：POST
 {
 	"dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
 	"ontid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
-	"pubKey": 1,
-	"contractVo": {
-		{
-			"argsList": [{
-				"name": "account",
-				"value": "Address:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"
-			}, {
-				"name": "dataId",
-				"value": "String:did:ont:AVePfF6AtTtnk4kB8HTPevTWU8FsXr2DrG"
-			}, {
-				"name": "ontid",
-				"value": "String:did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4"
-			}, {
-				"name": "index",
-				"value": 1
-			}, {
-				"name": "symbol",
-				"value": "String:DNF"
-			}, {
-				"name": "name",
-				"value": "String:123"
-			}, {
-				"name": "totalAmount",
-				"value": 100
-			}],
-			"contractHash": "0f0929b514ddf62522a8a335b588321b2e7725bc",
-			"method": "createTokenWithController",
-		}
+	"pubKey": 1
 	}
 ```
 
@@ -1173,7 +1273,6 @@ method：POST
 |dataId|String|dataId|
 |ontid|String|数据所属者ontid|
 |pubKey|Integer|签名的公钥编号|
-|contractVo|Map|生成tokenId的合约参数|
 
 响应：
 
@@ -1182,7 +1281,7 @@ method：POST
 	"action": "registerDataId",
 	"code": 0,
 	"msg": "SUCCESS",
-	"result": ["00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000":"00d17bb1432df401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000"],
+	"result": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
 	"version": "v1"
 }
 

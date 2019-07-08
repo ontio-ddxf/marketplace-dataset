@@ -100,6 +100,14 @@ public class OrderController {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
     }
 
+    @ApiOperation(value="查询二手商品", notes="查询二手商品" ,httpMethod="POST")
+    @PostMapping("/all/second")
+    public Result findSecondOrder(@RequestBody PageQueryVo req) {
+        String action = "findSecondOrder";
+        EsPage allOrder = orderService.findSecondOrder(action,req);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), allOrder);
+    }
+
     @ApiOperation(value="购买二手商品", notes="购买二手商品" ,httpMethod="POST")
     @PostMapping("/purchase/second")
     public Result purchaseSecondOrder(@RequestBody PurchaseVo purchaseVo) {
