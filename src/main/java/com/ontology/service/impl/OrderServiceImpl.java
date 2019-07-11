@@ -107,7 +107,7 @@ public class OrderServiceImpl implements OrderService {
             if (!indexExist) {
                 return null;
             }
-            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_INDEX_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
 
             List<Map<String, Object>> recordList = esPage.getRecordList();
             for (Map<String, Object> result : recordList) {
@@ -142,16 +142,52 @@ public class OrderServiceImpl implements OrderService {
         String expireDate = sdf.format(new Date(time));
         String createTime = sdf.format(new Date());
 
-        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_INDEX_DATASET, id, null);
+        GetResponse response = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        Map<String, Object> data = response.getSource();
+        long version = response.getVersion();
         String authId = (String) data.get("authId");
         String dataId = (String) data.get("dataId");
-        String provider = (String) data.get("ontid");
+        String provider = (String) data.get("provider");
         String token = (String) data.get("token");
         String price = (String) data.get("price");
+        int amount = (int) data.get("amount");
+        Map<String, Object> map = new HashMap<>();
+        amount--;
+        if (amount<=0) {
+            map.put("state", "4");
+        }
+        map.put("amount", amount);
+        // 先更新商品数量
+        ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
 
-        String txHash = sendAndCreateOrder(action,sigVo,"",authId,dataId,name,desc,img,provider,demander,demanderAddress,
-                token,price,judger,"2",createTime,createTime,expireDate,keywords);
-        return txHash;
+        // 商品数量更新成功后下单
+        try {
+            String txHash = sendAndCreateOrder(action, sigVo, null, authId, dataId, name, desc, img, provider, demander, demanderAddress,
+                    token, price, judger, "2", createTime, createTime, expireDate, keywords);
+            return txHash;
+        } catch (Exception e) {
+            log.error("catch exception:", e);
+            // 下单失败手动回滚商品数量
+            boolean updateAmount = false;
+            while (!updateAmount) {
+                GetResponse rollbackResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+                Map<String, Object> rollbackData = rollbackResponse.getSource();
+                long rollbackVersion = rollbackResponse.getVersion();
+                int rollbackAmount = (int) rollbackData.get("amount");
+                Map<String,Object> rollback = new HashMap<>();
+                if (rollbackAmount==0) {
+                    rollback.put("state", "2");
+                }
+                rollback.put("amount", ++rollbackAmount);
+                try {
+                    ElasticsearchUtil.updateDataByIdAndVersion(rollback, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, rollbackVersion);
+                    updateAmount = true;
+                } catch (Exception es) {
+                    log.info("update failed, try again");
+                }
+            }
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
     }
 
     @Override
@@ -221,11 +257,8 @@ public class OrderServiceImpl implements OrderService {
         SigVo sigVo = req.getSigVo();
 
         try {
-            // 先发送交易
-            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
-
             Map<String, Object> order = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id, null);
-            String demanderOntid = (String) order.get("demanderOntid");
+            String demanderOntid = (String) order.get("demander");
             String state = (String) order.get("state");
             // 验证订单状态和买家身份
             if (!demanderOntid.equals(ontid)) {
@@ -234,6 +267,9 @@ public class OrderServiceImpl implements OrderService {
             if ("1".equals(state)) {
                 throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
             }
+
+            contractService.sendTransaction("snedTransaction", sigVo);
+
             // 查找数据源
             String dataId = (String) order.get("dataId");
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -247,7 +283,7 @@ public class OrderServiceImpl implements OrderService {
             String data = (String) dataset.get("dataSource");
             return data;
         } catch (Exception e) {
-            log.error("catch exception:",e);
+            log.error("catch exception:", e);
             throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
         }
     }
@@ -312,7 +348,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String createSecondOrder(String action, OrderVo orderVo) {
         String dataId = orderVo.getDataId();
-        String tokenId = orderVo.getTokenId();
+        int tokenId = orderVo.getTokenId();
         String name = orderVo.getName();
         String desc = orderVo.getDesc();
         String img = orderVo.getImg();
@@ -326,16 +362,19 @@ public class OrderServiceImpl implements OrderService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String createTime = sdf.format(new Date());
 
-        String txHash = sendAndCreateOrder(action,sigVo,tokenId,"",dataId,name,desc,img,providerOntid,"","",token,price,JSON.toJSONString(ojList),"1",createTime,"","",keywords);
-
-        // 修改原order状态
-        String id = orderVo.getId();
-        Map<String, Object> origin = new HashMap<>();
-        origin.put("state", "6");
-        ElasticsearchUtil.updateDataById(origin, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
-
-        return txHash;
-
+        String txHash = null;
+        try {
+            txHash = sendAndCreateOrder(action, sigVo, tokenId, "", dataId, name, desc, img, providerOntid, "", "", token, price, JSON.toJSONString(ojList), "", createTime, "", "", keywords);
+            // 修改原order状态
+            String id = orderVo.getId();
+            Map<String, Object> origin = new HashMap<>();
+            origin.put("state", "6");
+            ElasticsearchUtil.updateDataById(origin, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
+            return txHash;
+        } catch (Exception e) {
+            log.error("catch exception:", e);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
     }
 
     @Override
@@ -367,7 +406,7 @@ public class OrderServiceImpl implements OrderService {
             if (!indexExist) {
                 return null;
             }
-            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_INDEX_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
+            EsPage esPage = ElasticsearchUtil.searchDataPage(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, pageNum, pageSize, boolQuery, null, "createTime.keyword", null);
 
             List<Map<String, Object>> recordList = esPage.getRecordList();
             for (Map<String, Object> result : recordList) {
@@ -405,7 +444,7 @@ public class OrderServiceImpl implements OrderService {
             order.put("boughtTime", boughtTime);
             order.put("expireTime", expireDate);
             order.put("state", "2");
-            ElasticsearchUtil.updateDataById(order,Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER,id);
+            ElasticsearchUtil.updateDataById(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, id);
             return txHash;
         } catch (Exception e) {
             log.error("catch exception:", e);
@@ -413,43 +452,38 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private String sendAndCreateOrder(String action, SigVo sigVo, String tokenId, String authId, String dataId, String name, String desc,
+    private String sendAndCreateOrder(String action, SigVo sigVo, Integer tokenId, String authId, String dataId, String name, String desc,
                                       String img, String provider, String demander, String demanderAddress, String token, String price,
-                                      String judger, String state, String createTime, String boughtTime, String expireTime, List<String> keywords) {
-        try {
-            // 先发送交易
-            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
+                                      String judger, String state, String createTime, String boughtTime, String expireTime, List<String> keywords) throws Exception {
+        // 先发送交易
+        String txHash = contractService.sendTransaction("snedTransaction", sigVo);
 
-            Map<String, Object> order = new LinkedHashMap<>();
-            order.put("orderId", "");
-            order.put("tokenId", tokenId);
-            order.put("authId", authId);
-            order.put("dataId", dataId);
-            order.put("name", name);
-            order.put("desc", desc);
-            order.put("img", img);
-            order.put("provider", provider);
-            order.put("demander", demander);
-            order.put("demanderAddress", demanderAddress);
-            order.put("token", token);
-            order.put("price", price);
-            order.put("judger", judger);
-            order.put("arbitrage", "");
-            order.put("state", state);
-            order.put("createTime", createTime);
-            order.put("boughtTime", boughtTime);
-            order.put("expireTime", expireTime);
-            order.put("cancelTime", "");
-            order.put("confirmTime", "");
-            for (int i = 0; i < keywords.size(); i++) {
-                order.put("column" + i, keywords.get(i));
-            }
-            ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
-            return txHash;
-        } catch (Exception e) {
-            log.error("catch exception:", e);
-            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        Map<String, Object> order = new LinkedHashMap<>();
+        order.put("orderId", "");
+        order.put("tokenId", tokenId);
+        order.put("authId", authId);
+        order.put("dataId", dataId);
+        order.put("name", name);
+        order.put("desc", desc);
+        order.put("img", img);
+        order.put("provider", provider);
+        order.put("demander", demander);
+        order.put("demanderAddress", demanderAddress);
+        order.put("token", token);
+        order.put("price", price);
+        order.put("judger", judger);
+        order.put("arbitrage", "");
+        order.put("state", state);
+        order.put("createTime", createTime);
+        order.put("boughtTime", boughtTime);
+        order.put("expireTime", expireTime);
+        order.put("cancelTime", "");
+        order.put("confirmTime", "");
+        for (int i = 0; i < keywords.size(); i++) {
+            order.put("column" + i, keywords.get(i));
         }
+        ElasticsearchUtil.addData(order, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
+        return txHash;
     }
 
 }

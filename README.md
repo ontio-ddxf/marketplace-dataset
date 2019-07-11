@@ -986,7 +986,7 @@ method：POST
 
 ###  购买二手商品
 ```
-url：/api/v1/order/purchase
+url：/api/v1/order/purchase/second
 method：POST
 ```
 
@@ -1265,7 +1265,7 @@ method：POST
 	"dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
 	"ontid": "did:ont:AYYABY37JqzNZ8Pe8ebRvLMtc46qvX7tg4",
 	"pubKey": 1
-	}
+}
 ```
 
 | Field Name | Type | Description |

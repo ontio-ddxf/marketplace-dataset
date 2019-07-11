@@ -8,11 +8,13 @@ import com.ontology.service.ContractService;
 import com.ontology.utils.ErrorInfo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @Api(tags = "合约调用接口")
 @RestController
 @RequestMapping("/api/v1/contract")
@@ -43,6 +45,7 @@ public class ContractController {
     @PostMapping(value = "/dataid")
     public Result dataid(@RequestBody DataIdVo dataIdVo) throws Exception {
         String action = "registerDataId";
+        log.info(action);
         String txHex = contractService.registerDataId(action,dataIdVo);
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHex);
     }

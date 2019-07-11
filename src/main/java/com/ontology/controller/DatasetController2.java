@@ -48,6 +48,9 @@ public class DatasetController2 {
         String ontid = req.getOntid();
         String certifier = req.getCertifier();
         DataVo data = req.getData();
+        String name = data.getName();
+        String desc = data.getDesc();
+        String img = data.getImg();
         List<String> keywords = data.getKeywords();
         String dataSource = req.getDataSource();
         if (CollectionUtils.isEmpty(keywords)) {
@@ -65,9 +68,13 @@ public class DatasetController2 {
         obj.put("id", id);
         obj.put("dataId", "");
         obj.put("authId", "");
+        obj.put("name", name);
+        obj.put("desc", desc);
+        obj.put("img", img);
         obj.put("provider", ontid);
         obj.put("token", "");
         obj.put("price", "");
+        obj.put("amount", 0);
         obj.put("createTime", date);
         obj.put("certifier", certifier);
         obj.put("isCertificated", 0);
@@ -134,7 +141,7 @@ public class DatasetController2 {
     public Result getDataByProvider(@PathVariable String ontid, @RequestParam Integer pageNum, @RequestParam Integer pageSize) {
         String action = "getDataByProvider";
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        MatchQueryBuilder queryProvider = QueryBuilders.matchQuery("ontid", ontid);
+        MatchQueryBuilder queryProvider = QueryBuilders.matchQuery("provider", ontid);
         boolQuery.must(queryProvider);
         boolean indexExist = ElasticsearchUtil.isIndexExist(Constant.ES_INDEX_DATASET);
         if (!indexExist) {
@@ -152,7 +159,7 @@ public class DatasetController2 {
     @PostMapping("/dataId")
     public Result createDataIdAndTokenId(@RequestBody TokenIdVo req) {
         String action = "createDataId";
-
+        log.info(action);
         String id = req.getId();
         Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
         Object dataId = data.get("dataId");
@@ -166,7 +173,7 @@ public class DatasetController2 {
             // 本地存储
             Map<String,Object> dataset = new HashMap<>();
             dataset.put("dataId",req.getDataId());
-            dataset.put("state",1);
+            dataset.put("state","1");
             ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET, id);
             return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), dataIdTxHash);
         } catch (Exception e) {

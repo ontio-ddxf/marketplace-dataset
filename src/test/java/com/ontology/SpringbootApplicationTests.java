@@ -62,9 +62,19 @@ public class SpringbootApplicationTests {
 	@Test
 	public void updateData() {
 		Map<String,Object> map = new HashMap<>();
-		map.put("state","5");
+		map.put("state","6");
 
-		ElasticsearchUtil.updateDataById(map, "order_index", "order","8E38579484324634BEE1D2DE0F888644");
+		ElasticsearchUtil.updateDataById(map, "order_index", "order","485068391BF048E889ABE9064D511275");
+
+	}
+
+	@Test
+	public void updateData2() {
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		MatchQueryBuilder querydata = QueryBuilders.matchQuery("dataId", "did:ont:ANoc4WHoPSv6bZTu5UGfrJ7pxnC1ySfJEH");
+		boolQuery.must(querydata);
+		List<Map<String, Object>> list = ElasticsearchUtil.searchListData(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, boolQuery, null, null, null, null);
+		log.info("",list.size());
 
 	}
 

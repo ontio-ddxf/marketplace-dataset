@@ -12,7 +12,7 @@ public class OrderVo {
     @ApiModelProperty(name="dataId",value = "dataId")
     private String dataId;
     @ApiModelProperty(name="tokenId",value = "tokenId")
-    private String tokenId;
+    private int tokenId;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String name;
     @ApiModelProperty(name="tokenId",value = "tokenId")
