@@ -201,6 +201,7 @@ public class SDKUtil {
     public String sendTransaction(SigVo sigVo) throws Exception {
         byte[] bytes = Helper.hexToBytes(sigVo.getTxHex());
         Transaction tx = Transaction.deserializeFrom(bytes);
+        log.info("payer:{}",tx.payer.toBase58());
         Sig[] sigs = new Sig[1];
         sigs[0] = new Sig();
         sigs[0].M = 1;
@@ -221,7 +222,7 @@ public class SDKUtil {
         OntSdk ontSdk = getOntSdk();
         byte[] arg;
         List list = new ArrayList();
-        list.add(new Struct().add(dataId,ontid,pubKey));
+        list.add(new Struct().add(dataId,ontid,1));
         arg = NativeBuildParams.createCodeParamsScript(list);
         Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes("0000000000000000000000000000000000000003")),"regIDWithController",arg,configParam.PAYER_ADDRESS,20000,500);
         return tx.toHexString();
@@ -258,5 +259,26 @@ public class SDKUtil {
         Transaction[] txs = ontSdk.makeTransactionByJson(params);
         Object o = ontSdk.getConnect().sendRawTransactionPreExec(txs[0].toHexString());
         return o;
+    }
+
+    public Object addSignAndsendTransaction(Transaction transaction, String acctWif, boolean preExec) throws Exception {
+        OntSdk ontSdk = getOntSdk();
+        Account account = new Account(Account.getPrivateKeyFromWIF(acctWif), ontSdk.getWalletMgr().getSignatureScheme());
+        ontSdk.addSign(transaction,account);
+        if (preExec) {
+            return ontSdk.getConnect().sendRawTransactionPreExec(transaction.toHexString());
+        } else {
+            ontSdk.getConnect().sendRawTransaction(transaction.toHexString());
+            return transaction.hash().toString();
+        }
+    }
+
+    public Object verified(String pubKey, String data, String signature) throws Exception {
+        OntSdk ontSdk = getOntSdk();
+        byte[] pubKeyBytes = Helper.hexToBytes(pubKey);
+//        byte[] dataBytes = Helper.hexToBytes(data);
+        byte[] signatureBytes = Helper.hexToBytes(signature);
+        boolean b = ontSdk.verifySignature(pubKeyBytes, data.getBytes(), signatureBytes);
+        return b;
     }
 }

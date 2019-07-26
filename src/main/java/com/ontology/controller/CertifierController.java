@@ -2,7 +2,7 @@ package com.ontology.controller;
 
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
-import com.ontology.controller.vo.CertificationVo;
+import com.ontology.controller.vo.MessageDto;
 import com.ontology.entity.Certifier;
 import com.ontology.service.CertifierService;
 import com.ontology.utils.Constant;
@@ -28,9 +28,6 @@ public class CertifierController {
 
     @Autowired
     private CertifierService certifierService;
-
-    private String indexName = "dataset_index";
-    private String esType = "dataset";
 
     @ApiOperation(value = "获取认证人列表", notes = "获取认证人列表", httpMethod = "GET")
     @GetMapping
@@ -63,19 +60,27 @@ public class CertifierController {
         return new Result(action,0, "SUCCESS", esPage);
     }
 
-    @ApiOperation(value = "认证数据", notes = "认证数据", httpMethod = "POST")
-    @PostMapping
-    public Result certificate(@RequestBody CertificationVo req) {
+    @ApiOperation(value = "获取message", notes = "获取message", httpMethod = "GET")
+    @GetMapping("/message/{id}")
+    public Result getMessage(@PathVariable String id) {
+        String action = "getMessage";
+        Map<String,Object> result = certifierService.getMessage(id);
+        return new Result(action,0, "SUCCESS", result);
+    }
+
+    @ApiOperation(value = "回调验证", notes = "回调验证", httpMethod = "POST")
+    @PostMapping("/callback")
+    public Map<String,Object> callback(@RequestBody MessageDto req) {
         String action = "certificate";
-        Map<String, Object> map = ElasticsearchUtil.searchDataById(indexName, esType, req.getId(), null);
-        if (map == null) {
-            return new Result(action,500, "NOT_FOUND", "");
-        }
-        if (!map.get("certifier").equals(req.getCertifier())) {
-            return new Result(action,500, "NO_PERMISSION", "");
-        }
-        map.put("isCertificated", 1);
-        ElasticsearchUtil.updateDataById(map, indexName, esType, req.getId());
-        return new Result(action,0, "SUCCESS", "SUCCESS");
+        Map<String,Object> result = certifierService.callback(action,req);
+        return result;
+    }
+
+    @ApiOperation(value = "查询登录是否成功", notes = "查询登录是否成功", httpMethod = "GET")
+    @GetMapping("/result/{id}")
+    public Result registerResult(@PathVariable String id) {
+        String action = "certificateResult";
+        String isSuccessful = certifierService.certificateResult(action,id);
+        return new Result(action,0, "SUCCESS", isSuccessful);
     }
 }

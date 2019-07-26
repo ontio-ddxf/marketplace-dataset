@@ -16,8 +16,19 @@ public class ConfigParam {
 	@Value("${payer.addr}")
 	public String PAYER_ADDRESS;
 
+	@Value("${contract.hash.ons}")
+	public String CONTRACT_HASH_ONS;
+
 	@Value("${contract.hash.dtoken}")
 	public String CONTRACT_HASH_DTOKEN;
 
+	@Value("${contract.hash.mp}")
+	public String CONTRACT_HASH_MP;
+
+	@Value("${contract.hash.mp.auth}")
+	public String CONTRACT_HASH_MP_AUTH;
+
+	@Value("${callback.url}")
+	public String CALLBACK_URL;
 
 }

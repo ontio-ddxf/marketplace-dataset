@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 public class DataIdVo {
+    @ApiModelProperty(name="数据的id",value = "数据的id")
+    private String id;
     @ApiModelProperty(name="dataId",value = "dataId")
     private String dataId;
     @ApiModelProperty(name="ontid",value = "ontid")

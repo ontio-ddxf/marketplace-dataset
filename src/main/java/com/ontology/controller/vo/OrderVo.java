@@ -31,7 +31,9 @@ public class OrderVo {
     private List<String> ojList;
     @ApiModelProperty(name="keywords",value = "商品关键字")
     private List<String> keywords;
-    @ApiModelProperty(name="sigVo",value = "挂单交易签名信息")
+    @ApiModelProperty(name="contractVo",value = "挂单交易参数")
+    private ContractVo contractVo;
+    @ApiModelProperty(name="SigVo",value = "SigVo")
     private SigVo sigVo;
 
 }

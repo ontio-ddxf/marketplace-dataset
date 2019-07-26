@@ -27,4 +27,6 @@ public class PurchaseVo {
     private Integer expireTime;
     @ApiModelProperty(name="sigVo",value = "购买交易签名信息")
     private SigVo sigVo;
+    @ApiModelProperty(name="contractVo",value = "下单交易参数")
+    private ContractVo contractVo;
 }

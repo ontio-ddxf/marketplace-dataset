@@ -6,7 +6,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.controller.vo.*;
+import com.ontology.entity.Invoke;
 import com.ontology.exception.MarketplaceException;
+import com.ontology.mapper.InvokeMapper;
 import com.ontology.service.ContractService;
 import com.ontology.service.OrderService;
 import com.ontology.utils.*;
@@ -36,46 +38,42 @@ public class OrderServiceImpl implements OrderService {
     private ConfigParam configParam;
     @Autowired
     private SDKUtil sdkUtil;
+    @Autowired
+    private InvokeMapper invokeMapper;
 
-    /**
-     * 修改dataset表状态代表上架
-     *
-     * @param action
-     * @param orderVo
-     * @return
-     */
-    @Override
-    public String createOrder(String action, OrderVo orderVo) {
-        String id = orderVo.getId();
-        String token = orderVo.getToken();
-        String price = orderVo.getPrice();
-        Integer amount = orderVo.getAmount();
-        List<String> ojList = orderVo.getOjList();
-        SigVo sigVo = orderVo.getSigVo();
 
-        GetResponse response = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
-        long version = response.getVersion();
-        Map<String, Object> data = response.getSource();
-        String state = (String) data.get("state");
-        if ("0".equals(state) || "2".equals(state)) {
-            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
-        }
-        try {
-            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
-
-            Map<String, Object> map = new HashMap<>();
-            map.put("state", "2");
-            map.put("token", token);
-            map.put("price", price);
-            map.put("amount", amount);
-            map.put("judger", JSON.toJSONString(ojList));
-            ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
-            return txHash;
-        } catch (Exception e) {
-            log.error("catch exception:", e);
-            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
-        }
-    }
+//    @Override
+//    public String createOrder(String action, OrderVo orderVo) {
+//        String id = orderVo.getId();
+//        String token = orderVo.getToken();
+//        String price = orderVo.getPrice();
+//        Integer amount = orderVo.getAmount();
+//        List<String> ojList = orderVo.getOjList();
+//        SigVo sigVo = orderVo.getSigVo();
+//
+//        GetResponse response = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+//        long version = response.getVersion();
+//        Map<String, Object> data = response.getSource();
+//        String state = (String) data.get("state");
+//        if ("0".equals(state) || "2".equals(state)) {
+//            throw new MarketplaceException(action, ErrorInfo.NO_PERMISSION.descCN(), ErrorInfo.NO_PERMISSION.descEN(), ErrorInfo.NO_PERMISSION.code());
+//        }
+//        try {
+//            String txHash = contractService.sendTransaction("snedTransaction", sigVo);
+//
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("state", "2");
+//            map.put("token", token);
+//            map.put("price", price);
+//            map.put("amount", amount);
+//            map.put("judger", JSON.toJSONString(ojList));
+//            ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
+//            return txHash;
+//        } catch (Exception e) {
+//            log.error("catch exception:", e);
+//            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+//        }
+//    }
 
 
     @Override
@@ -450,6 +448,199 @@ public class OrderServiceImpl implements OrderService {
             log.error("catch exception:", e);
             throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
+    }
+
+    @Override
+    public Map<String, Object> authOrder(String action, OrderVo req) throws Exception {
+        String uuid = UUID.randomUUID().toString();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", req.getId());
+        map.put("state", "2");
+        map.put("token", req.getToken());
+        map.put("price", req.getPrice());
+        map.put("amount", req.getAmount());
+        map.put("judger", JSON.toJSONString(req.getOjList()));
+
+        String callback = String.format(configParam.CALLBACK_URL, "api/v1/order/invoke/auth");
+
+        ContractVo contractVo = req.getContractVo();
+
+        String txHex = contractService.makeTransaction(action, contractVo);
+
+        Invoke invoke = new Invoke();
+        invoke.setId(uuid);
+        invoke.setSuccess(0);
+        invoke.setParams(txHex);
+        invoke.setObject(JSON.toJSONString(map));
+        invokeMapper.insert(invoke);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", uuid);
+        result.put("callback", callback);
+        result.put("message", txHex);
+        return result;
+    }
+
+    @Override
+    public JSONObject invokeAuth(String action, TransactionDto req) throws Exception {
+        Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
+        if (invoke == null) {
+            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
+        }
+
+        String publickey = (String) req.getParams().get("publickey");
+        String signature = (String) req.getParams().get("signature");
+        String txHex = invoke.getParams();
+        SigVo sigVo = new SigVo();
+        sigVo.setPubKeys(publickey);
+        sigVo.setSigData(signature);
+        sigVo.setTxHex(txHex);
+        sdkUtil.sendTransaction(sigVo);
+
+        JSONObject orderMap = JSONObject.parseObject(invoke.getObject());
+        String id = orderMap.getString("id");
+        ElasticsearchUtil.updateDataById(orderMap, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
+
+        invoke.setSuccess(1);
+        invokeMapper.updateByPrimaryKeySelective(invoke);
+
+        return new JSONObject();
+    }
+
+    @Override
+    public Map<String, Object> purchaseOrder(String action, PurchaseVo req) throws Exception {
+        String uuid = UUID.randomUUID().toString();
+
+        String id = req.getId();
+        String demander = req.getDemanderOntid();
+        String demanderAddress = req.getDemanderAddress();
+        String judger = req.getJudger();
+        String name = req.getName();
+        String desc = req.getDesc();
+        String img = req.getImg();
+        List<String> keywords = req.getKeywords();
+
+        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        String authId = (String) data.get("authId");
+        String dataId = (String) data.get("dataId");
+        String provider = (String) data.get("provider");
+        String token = (String) data.get("token");
+        String price = (String) data.get("price");
+
+        Map<String, Object> order = new LinkedHashMap<>();
+        order.put("orderId", "");
+        order.put("tokenId", null);
+        order.put("authId", authId);
+        order.put("dataId", dataId);
+        order.put("name", name);
+        order.put("desc", desc);
+        order.put("img", img);
+        order.put("provider", provider);
+        order.put("demander", demander);
+        order.put("demanderAddress", demanderAddress);
+        order.put("token", token);
+        order.put("price", price);
+        order.put("judger", judger);
+        order.put("arbitrage", "");
+        order.put("state", "");
+        order.put("createTime", "");
+        order.put("boughtTime", "");
+        order.put("expireTime", "");
+        order.put("cancelTime", "");
+        order.put("confirmTime", "");
+        order.put("datasetId",id);
+        for (int i = 0; i < keywords.size(); i++) {
+            order.put("column" + i, keywords.get(i));
+        }
+
+        String callback = String.format(configParam.CALLBACK_URL, "api/v1/order/invoke/purchase");
+
+        ContractVo contractVo = req.getContractVo();
+
+        String txHex = contractService.makeTransaction(action, contractVo);
+
+        Invoke invoke = new Invoke();
+        invoke.setId(uuid);
+        invoke.setSuccess(0);
+        invoke.setParams(txHex);
+        invoke.setObject(JSON.toJSONString(order));
+        invokeMapper.insert(invoke);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", uuid);
+        result.put("callback", callback);
+        result.put("message", txHex);
+        return result;
+    }
+
+    @Override
+    public JSONObject invokePurchase(String action, TransactionDto req) {
+        Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
+        if (invoke == null) {
+            throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
+        }
+
+        String publickey = (String) req.getParams().get("publickey");
+        String signature = (String) req.getParams().get("signature");
+        String txHex = invoke.getParams();
+        SigVo sigVo = new SigVo();
+        sigVo.setPubKeys(publickey);
+        sigVo.setSigData(signature);
+        sigVo.setTxHex(txHex);
+
+        JSONObject orderMap = JSONObject.parseObject(invoke.getObject());
+        String id = orderMap.getString("datasetId");
+        GetResponse response = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+        Map<String, Object> data = response.getSource();
+        long version = response.getVersion();
+        int amount = (int) data.get("amount");
+        Map<String, Object> map = new HashMap<>();
+        amount--;
+        if (amount <= 0) {
+            map.put("state", "4");
+        }
+        map.put("amount", amount);
+        // 先更新商品数量
+        ElasticsearchUtil.updateDataByIdAndVersion(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, version);
+
+        try {
+            sdkUtil.sendTransaction(sigVo);
+            Integer expireTime = 10;
+            long time = new Date().getTime() + (expireTime * 60 * 1000);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String expireDate = sdf.format(new Date(time));
+            String createTime = sdf.format(new Date());
+            orderMap.put("state","2");
+            orderMap.put("createTime", createTime);
+            orderMap.put("boughtTime", createTime);
+            orderMap.put("expireTime", expireDate);
+            ElasticsearchUtil.addData(orderMap, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
+        } catch (Exception e) {
+            log.error("catch exception:", e);
+            // 下单失败手动回滚商品数量
+            boolean updateAmount = false;
+            while (!updateAmount) {
+                GetResponse rollbackResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
+                Map<String, Object> rollbackData = rollbackResponse.getSource();
+                long rollbackVersion = rollbackResponse.getVersion();
+                int rollbackAmount = (int) rollbackData.get("amount");
+                Map<String, Object> rollback = new HashMap<>();
+                if (rollbackAmount == 0) {
+                    rollback.put("state", "2");
+                }
+                rollback.put("amount", ++rollbackAmount);
+                try {
+                    ElasticsearchUtil.updateDataByIdAndVersion(rollback, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, rollbackVersion);
+                    updateAmount = true;
+                } catch (Exception es) {
+                    log.info("update failed, try again");
+                }
+            }
+        }
+        invoke.setSuccess(1);
+        invokeMapper.updateByPrimaryKeySelective(invoke);
+        return new JSONObject();
     }
 
     private String sendAndCreateOrder(String action, SigVo sigVo, Integer tokenId, String authId, String dataId, String name, String desc,

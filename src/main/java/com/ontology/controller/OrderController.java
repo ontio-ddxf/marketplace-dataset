@@ -1,5 +1,6 @@
 package com.ontology.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
 import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
@@ -23,12 +24,27 @@ public class OrderController {
     private OrderService orderService;
 
 
-    @ApiOperation(value="挂单授权MP生成token", notes="挂单授权MP生成token" ,httpMethod="POST")
+//    @ApiOperation(value="挂单授权MP生成token", notes="挂单授权MP生成token" ,httpMethod="POST")
+//    @PostMapping
+//    public Result createOrder(@RequestBody OrderVo orderVo) {
+//        String action = "authOrder";
+//        String txHash = orderService.createOrder(action,orderVo);
+//        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+//    }
+
+    @ApiOperation(value = "构造挂单的交易", notes = "构造挂单的交易", httpMethod = "POST")
     @PostMapping
-    public Result createOrder(@RequestBody OrderVo orderVo) {
+    public Result authOrder(@RequestBody OrderVo req) throws Exception {
         String action = "authOrder";
-        String txHash = orderService.createOrder(action,orderVo);
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+        Map<String,Object> result = orderService.authOrder(action,req);
+        return new Result(action,0, "SUCCESS", result);
+    }
+
+    @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
+    @PostMapping("/invoke/auth")
+    public JSONObject invokeAuth(@RequestBody TransactionDto req) throws Exception {
+        String action = "invoke";
+        return orderService.invokeAuth(action,req);
     }
 
     @ApiOperation(value="查询所有挂单", notes="查询所有挂单" ,httpMethod="POST")
@@ -52,15 +68,30 @@ public class OrderController {
      * @param req
      * @return
      */
-    @ApiOperation(value="购买商品", notes="购买商品" ,httpMethod="POST")
+//    @ApiOperation(value="购买商品", notes="购买商品" ,httpMethod="POST")
+//    @PostMapping("/purchase")
+//    public Result purchase(@RequestBody PurchaseVo req) {
+//        String action = "purchase";
+//        String txHash = orderService.purchase(action,req);
+//        if (txHash == null) {
+//            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
+//        }
+//        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+//    }
+
+    @ApiOperation(value = "构造挂单的交易", notes = "构造挂单的交易", httpMethod = "POST")
     @PostMapping("/purchase")
-    public Result purchase(@RequestBody PurchaseVo req) {
-        String action = "purchase";
-        String txHash = orderService.purchase(action,req);
-        if (txHash == null) {
-            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
-        }
-        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
+    public Result purchaseOrder(@RequestBody PurchaseVo req) throws Exception {
+        String action = "purchaseOrder";
+        Map<String,Object> result = orderService.purchaseOrder(action,req);
+        return new Result(action,0, "SUCCESS", result);
+    }
+
+    @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
+    @PostMapping("/invoke/purchase")
+    public JSONObject invokeResult(@RequestBody TransactionDto req) throws Exception {
+        String action = "invokePurchase";
+        return orderService.invokePurchase(action,req);
     }
 
     @ApiOperation(value="查看数据", notes="查看数据" ,httpMethod="POST")

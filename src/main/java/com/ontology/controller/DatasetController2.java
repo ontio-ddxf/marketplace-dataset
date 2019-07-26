@@ -7,6 +7,7 @@ import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 import com.ontology.exception.MarketplaceException;
 import com.ontology.service.ContractService;
+import com.ontology.service.DatasetService;
 import com.ontology.utils.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,8 @@ public class DatasetController2 {
     private SDKUtil sdkUtil;
     @Autowired
     private ConfigParam configParam;
+    @Autowired
+    private DatasetService datasetService;
 
     /**
      * 新增或更新数据
@@ -155,8 +158,23 @@ public class DatasetController2 {
         return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), esPage);
     }
 
-    @ApiOperation(value = "卖家生成dataId", notes = "卖家生成dataId", httpMethod = "POST")
+    @ApiOperation(value = "构造生成dataId的交易", notes = "构造生成dataId的交易", httpMethod = "POST")
     @PostMapping("/dataId")
+    public Result registerDomain(@RequestBody DataIdVo req) throws Exception {
+        String action = "registerDataId";
+        Map<String,Object> result = datasetService.registerDataId(action,req);
+        return new Result(action,0, "SUCCESS", result);
+    }
+
+    @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
+    @PostMapping("/dataId/invoke")
+    public JSONObject invokeResult(@RequestBody TransactionDto req) throws Exception {
+        String action = "invoke";
+        return datasetService.invokeResult(action,req);
+    }
+
+    @ApiOperation(value = "卖家生成dataId", notes = "卖家生成dataId", httpMethod = "POST")
+//    @PostMapping("/dataId")
     public Result createDataIdAndTokenId(@RequestBody TokenIdVo req) {
         String action = "createDataId";
         log.info(action);

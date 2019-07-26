@@ -3,8 +3,10 @@ package com.ontology;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.github.ontio.common.Address;
+import com.ontology.controller.vo.SigVo;
 import com.ontology.utils.Constant;
 import com.ontology.utils.ElasticsearchUtil;
+import com.ontology.utils.SDKUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -13,6 +15,7 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -22,6 +25,27 @@ import java.util.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class SpringbootApplicationTests {
+
+	@Autowired
+	private SDKUtil sdkUtil;
+
+	@Test
+	public void testSend() throws Exception {
+		SigVo sigVo = new SigVo();
+		sigVo.setTxHex("00d168a46458f401000000000000204e000000000000675478ea7368fd9579c00a8a749d29c2b82f2aefa600c66b2a6469643a6f6e743a41615a364b354b704473456f7a4832326b784a58624d476e375461736e355a616f736a7cc82a6469643a6f6e743a4152434553566e50384c6266365337467554656933736d4133354551596f67344c526a7cc8516a7cc86c13726567494457697468436f6e74726f6c6c65721400000000000000000000000000000000000000030068164f6e746f6c6f67792e4e61746976652e496e766f6b650000");
+		sigVo.setPubKeys("02ee173141c4965d8bfa1f88d326e083cef23b9191afdca53657f3ab74f99845b0");
+		sigVo.setSigData("01992e8da518ab77e8fb47a53b4c6a12b8cd0a4e52a94ea79bead30637b4aeb1532bfb2a1048725910ce174f7fb54c1fa7ebdbab3a044a87577bbc6c105c552208");
+		sdkUtil.sendTransaction(sigVo);
+	}
+
+	@Test
+	public void testver() throws Exception {
+		String pubKey = "02ee173141c4965d8bfa1f88d326e083cef23b9191afdca53657f3ab74f99845b0";
+		String data = "hello 1563977526455";
+		String signature = "014a72e4b30702400b9d7bafff491d7d93abf0ad4acdc76db6b5c01829a1535238027c26f4efdf94bf7ab7ae2f8407df6aab7f6c4a3abddca60a3ead0df0be047c";
+		Object verified = sdkUtil.verified(pubKey, data, signature);
+		log.info("{}",verified);
+	}
 
 	@Test
 	public void contextLoads() {
@@ -62,9 +86,9 @@ public class SpringbootApplicationTests {
 	@Test
 	public void updateData() {
 		Map<String,Object> map = new HashMap<>();
-		map.put("state","6");
+		map.put("createdTime","2019-07-17 15:41:19");
 
-		ElasticsearchUtil.updateDataById(map, "order_index", "order","485068391BF048E889ABE9064D511275");
+		ElasticsearchUtil.updateDataById(map, "event_index", "events","82A6820220CE4ADE8AAB80B4AD5EF2D1");
 
 	}
 
