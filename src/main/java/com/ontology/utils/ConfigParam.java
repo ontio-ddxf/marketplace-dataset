@@ -31,4 +31,10 @@ public class ConfigParam {
 	@Value("${callback.url}")
 	public String CALLBACK_URL;
 
+	/**
+	 *  域名管理者
+	 */
+	@Value("${ons.owner}")
+	public String ONS_OWNER;
+
 }

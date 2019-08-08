@@ -218,11 +218,28 @@ public class SDKUtil {
         return tx.hash().toString();
     }
 
+    public Object sendTransaction(Transaction transaction, String acctWif, boolean preExec) throws Exception {
+        OntSdk ontSdk = getOntSdk();
+        log.info("ontSdk:{}",ontSdk);
+        log.info("acctWif:{}",acctWif);
+        log.info("wif:{}",Account.getPrivateKeyFromWIF(acctWif));
+        log.info("getWalletMgr:{}",ontSdk.getWalletMgr());
+        log.info("scheme:{}",ontSdk.getWalletMgr().getSignatureScheme());
+        Account account = new Account(Account.getPrivateKeyFromWIF(acctWif), ontSdk.getWalletMgr().getSignatureScheme());
+        ontSdk.addSign(transaction,account);
+        if (preExec) {
+            return ontSdk.getConnect().sendRawTransactionPreExec(transaction.toHexString());
+        } else {
+            ontSdk.getConnect().sendRawTransaction(transaction.toHexString());
+            return transaction.hash().toString();
+        }
+    }
+
     public String makeRegIdWithController(String dataId, String ontid, Integer pubKey) throws Exception {
         OntSdk ontSdk = getOntSdk();
         byte[] arg;
         List list = new ArrayList();
-        list.add(new Struct().add(dataId,ontid,1));
+        list.add(new Struct().add(dataId,ontid,pubKey));
         arg = NativeBuildParams.createCodeParamsScript(list);
         Transaction tx = ontSdk.vm().buildNativeParams(new Address(Helper.hexToBytes("0000000000000000000000000000000000000003")),"regIDWithController",arg,configParam.PAYER_ADDRESS,20000,500);
         return tx.toHexString();
