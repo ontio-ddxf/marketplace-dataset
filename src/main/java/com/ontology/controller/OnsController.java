@@ -25,7 +25,7 @@ public class OnsController {
     private OnsService onsService;
 
 
-    @ApiOperation(value="ontid注册域名", notes="ontid注册域名" ,httpMethod="POST")
+    @ApiOperation(value="ontid注册域名", notes="ontid注册域名" ,httpMethod="GET")
     @GetMapping("/{ons}")
     public Result register(@PathVariable String ons) throws Exception {
         String action = "register";
@@ -57,7 +57,7 @@ public class OnsController {
         return new Result(action,0, "SUCCESS", isSuccessful);
     }
 
-    @ApiOperation(value = "根据ontid和主域名获取ons列表", notes = "根据ontid和主域名获取ons列表", httpMethod = "POST")
+    @ApiOperation(value = "根据ontid和主域名获取ons列表", notes = "根据ontid和主域名获取ons列表", httpMethod = "GET")
     @GetMapping("/list")
     public Result getOnsList(String ontid,String domain) throws Exception {
         String action = "getOnsList";

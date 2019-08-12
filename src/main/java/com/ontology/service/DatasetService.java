@@ -1,17 +1,15 @@
 package com.ontology.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.ontology.controller.vo.DataIdVo;
-import com.ontology.controller.vo.TokenIdVo;
-import com.ontology.controller.vo.TransactionDto;
+import com.ontology.controller.vo.AuthVo;
+import com.ontology.controller.vo.MultiTransactionDto;
 
-import java.io.IOException;
 import java.util.Map;
 
 public interface DatasetService {
 
-    Map<String, Object> registerDataId(String action, DataIdVo req) throws Exception;
+    Map<String, Object> registerDataIdAndPost(String action, AuthVo req) throws Exception;
 
-    JSONObject invokeResult(String action, TransactionDto req) throws Exception;
+    JSONObject invokeResult(String action, MultiTransactionDto req) throws Exception;
 
 }

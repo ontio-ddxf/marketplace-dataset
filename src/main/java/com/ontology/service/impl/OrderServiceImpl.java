@@ -558,19 +558,20 @@ public class OrderServiceImpl implements OrderService {
 
         ContractVo contractVo = req.getContractVo();
 
-        String txHex = contractService.makeTransaction(action, contractVo);
+        String purchaseTxHex = contractService.makeTransaction(action, contractVo);
+
 
         Invoke invoke = new Invoke();
         invoke.setId(uuid);
         invoke.setSuccess(0);
-        invoke.setParams(txHex);
+        invoke.setParams(purchaseTxHex);
         invoke.setObject(JSON.toJSONString(order));
         invokeMapper.insert(invoke);
 
         Map<String, Object> result = new HashMap<>();
         result.put("id", uuid);
         result.put("callback", callback);
-        result.put("message", txHex);
+        result.put("message", purchaseTxHex);
         return result;
     }
 

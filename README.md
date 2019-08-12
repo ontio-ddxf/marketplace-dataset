@@ -3,7 +3,7 @@
 	* 2.1. [插入或根据id更新数据到ElasticSearch](#插入或根据id更新数据到ElasticSearch)
 	* 2.2. [根据ID返回数据](#根据ID返回数据)
 	* 2.3. [根据卖家ontid返回数据](#根据卖家ontid返回数据)
-	* 2.4. [生成dataId](#生成dataId)
+	* 2.4. [注册dataId](#注册dataId)
 	* 2.5. [查询token余额](#查询token余额)
 	* 2.6. [根据dataId查询数据](#根据dataId查询数据)
 * 3. [认证接口](#认证接口)
@@ -95,8 +95,8 @@ method：PUT
 ```source-json
 {
     "action": "addOrUpdate",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "fa20c972950f46cdba99ca521f0c49fa",
     "version": "v1"
 }
@@ -104,8 +104,8 @@ method：PUT
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action    | String | 动作标志                      |
-| code      | int    | 错误码                        |
-| msg       | String | 成功为SUCCESS，失败为错误描述 |
+| error      | int    | 错误码                        |
+| desc       | String | 成功为SUCCESS，失败为错误描述 |
 | result    | String | 成功返回数据ID，失败返回""    |
 | version   | String | 版本号                        |
 
@@ -125,8 +125,8 @@ method:GET
 ```source-json
 {
     "action": "getData",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "isCertificated": 0,
         "dataId": "",
@@ -151,8 +151,8 @@ method:GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | Object | 返回数据 |
 | version   | String | 版本号                        |
 
@@ -174,8 +174,8 @@ method：GET
 ```source-json
 {
     "action": "getDataByProvider",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "currentPage": 0,
         "pageSize": 5,
@@ -210,13 +210,13 @@ method：GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回分页数据列表，失败返回"" |
 | version   | String | 版本号                        |
 
 
-###  生成dataId
+###  注册dataId
 
 ```
 url：/api/v1/dataset/dataId
@@ -252,8 +252,8 @@ method：POST
 ```source-json
 {
     "action": "createDataId",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "7d7c4f01e0fa3c3203424644697b8d2266f337fb25b3ae89bc9575194a5d5ce7",
     "version": "v1"
 }
@@ -262,8 +262,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 注册dataId和生成tokenId的交易hash |
 | version   | String | 版本号                        |
 
@@ -285,8 +285,8 @@ method：GET
 ```source-json
 {
     "action": "getBalanceOfToken",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": 999,
     "version": "v1"
 }
@@ -295,8 +295,8 @@ method：GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 该地址下token的余额 |
 | version   | String | 版本号                        |
 
@@ -317,8 +317,8 @@ method：GET
 ```source-json
 {
     "action": "getDatabyDataId",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "isCertificated": 0,
         "dataId": "did:ont:AL2pVs2zwogCvBD4GdsZD6woCkJdzPZJZ5",
@@ -343,8 +343,8 @@ method：GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | Object | 返回数据 |
 | version   | String | 版本号        |
 
@@ -361,8 +361,8 @@ method：GET
 
 ```source-json
 {
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": [
         {
             "id": "1",
@@ -373,8 +373,8 @@ method：GET
 ```
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回数据认证方列表，失败返回"" |
 
 
@@ -395,8 +395,8 @@ method：GET
 ```source-json
 {
     "action": "getToBeCertificated",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "currentPage": 0,
         "pageSize": 5,
@@ -431,8 +431,8 @@ method：GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回待认证分页列表，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -461,8 +461,8 @@ method：POST
 ```source-json
 {
     "action": "certificate",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "SUCCESS",
     "version": "v1"
 }
@@ -470,8 +470,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | String | 成功返回"SUCCESS"，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -513,8 +513,8 @@ method：POST
 ```source-json
 {
     "action": "createOrder",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "96a5dc65ec4e6efebcae8d2a802d759c3b33ddd398c3921702949b564a33923a",
     "version": "v1"
 }
@@ -523,8 +523,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回挂单交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -562,8 +562,8 @@ method：POST
 ```source-json
 {
     "action": "getAllOrder",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "currentPage": 0,
         "pageSize": 5,
@@ -601,8 +601,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回已挂单数据，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -634,8 +634,8 @@ method：POST
 ```source-json
 {
     "action": "findSelfOrder",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "currentPage": 0,
         "pageSize": 5,
@@ -672,8 +672,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回自己的订单，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -719,8 +719,8 @@ method：POST
 ```source-json
 {
     "action": "purchase",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "85f50a7c1c25632bdf1ae6708e9233c7ea1169336bcf5f14b8d926c3e99a76ec",
     "version": "v1"
 }
@@ -729,8 +729,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -764,8 +764,8 @@ method：POST
 ```source-json
 {
     "action": "getData",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "www.data.com",
     "version": "v1"
 }
@@ -774,8 +774,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回数据，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -794,8 +794,8 @@ method：Get
 ```source-json
 {
     "action": "getCurrentTokenId",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": 15,
     "version": "v1"
 }
@@ -804,8 +804,8 @@ method：Get
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | int | 成功返回当前数据的tokenId，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -824,8 +824,8 @@ method：Get
 ```source-json
 {
     "action": "getTokenBalance",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "accessCount": 12,
         "transferCount": 11,
@@ -838,8 +838,8 @@ method：Get
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | int | 成功返回当前token的剩余流转次数和访问次数，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -891,8 +891,8 @@ method：POST
 ```source-json
 {
     "action": "createSecondOrder",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "96a5dc65ec4e6efebcae8d2a802d759c3b33ddd398c3921702949b564a33923a",
     "version": "v1"
 }
@@ -901,8 +901,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回挂单交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -939,8 +939,8 @@ method：POST
 ```source-json
 {
     "action": "findSecondOrder",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": {
         "currentPage": 0,
         "pageSize": 5,
@@ -979,8 +979,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回已挂单数据，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1017,8 +1017,8 @@ method：POST
 ```source-json
 {
     "action": "purchaseSecondOrder",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "85f50a7c1c25632bdf1ae6708e9233c7ea1169336bcf5f14b8d926c3e99a76ec",
     "version": "v1"
 }
@@ -1027,8 +1027,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1046,8 +1046,8 @@ method：GET
 ```source-json
 {
     "action": "getJudger",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": [
         {
             "id": "1",
@@ -1060,8 +1060,8 @@ method：GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回数据仲裁方列表，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1083,8 +1083,8 @@ method：GET
 ```source-json
 {
 	"action": "getTobeJudged",
-	"code": 0,
-	"msg": "SUCCESS",
+	"error": 0,
+	"desc": "SUCCESS",
 	"result": [{
 		"keywords": ["keyword1","keyword2"],
 		"tokenId": "1",
@@ -1115,8 +1115,8 @@ method：GET
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回待仲裁分页列表，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1150,8 +1150,8 @@ method：POST
 ```source-json
 {
     "action": "judgeResult",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "85f50a7c1c25632bdf1ae6708e9233c7ea1169336bcf5f14b8d926c3e99a76ec",
     "version": "v1"
 }
@@ -1160,8 +1160,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1194,8 +1194,8 @@ method：POST
 ```source-json
 {
     "action": "makeTransaction",
-    "code": 0,
-    "msg": "SUCCESS",
+    "error": 0,
+    "desc": "SUCCESS",
     "result": "00d14be68c14f401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f5
                1c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209
                143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d9120
@@ -1207,8 +1207,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回交易hex，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1238,8 +1238,8 @@ method：POST
 ```source-json
 {
 	"action": "sendTransaction",
-	"code": 0,
-	"msg": "SUCCESS",
+	"error": 0,
+	"desc": "SUCCESS",
 	"result": "cc5dacf2d6a1f49444e7feee20c2a59c60a624e5662157300d9f6a9e953260c2",
 	"version": "v1"
 }
@@ -1248,8 +1248,8 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回交易hash，失败返回"" |
 | version   | String | 版本号                        |
 
@@ -1279,8 +1279,8 @@ method：POST
 ```source-json
 {
 	"action": "registerDataId",
-	"code": 0,
-	"msg": "SUCCESS",
+	"error": 0,
+	"desc": "SUCCESS",
 	"result": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
 	"version": "v1"
 }
@@ -1289,7 +1289,7 @@ method：POST
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
 | action | String | 动作标志 |
-| code | int | 错误码 |
-| msg | String | 成功为SUCCESS，失败为错误描述 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回交易hex，失败返回"" |
 | version   | String | 版本号                        |

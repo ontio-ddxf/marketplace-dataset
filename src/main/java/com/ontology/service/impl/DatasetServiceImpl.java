@@ -1,23 +1,20 @@
 package com.ontology.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.github.ontio.core.transaction.Transaction;
 import com.ontology.controller.vo.*;
-import com.ontology.entity.Certifier;
 import com.ontology.entity.Invoke;
 import com.ontology.exception.MarketplaceException;
-import com.ontology.mapper.CertifierMapper;
 import com.ontology.mapper.InvokeMapper;
 import com.ontology.secure.SecureConfig;
+import com.ontology.service.ContractService;
 import com.ontology.service.DatasetService;
 import com.ontology.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
-import java.io.IOException;
 import java.util.*;
 
 @Slf4j
@@ -31,61 +28,89 @@ public class DatasetServiceImpl implements DatasetService {
     private SDKUtil sdkUtil;
     @Autowired
     private SecureConfig secureConfig;
+    @Autowired
+    private ContractService contractService;
 
 
     @Override
-    public Map<String, Object> registerDataId(String action, DataIdVo req) throws Exception {
+    public Map<String, Object> registerDataIdAndPost(String action, AuthVo req) throws Exception {
         String uuid = UUID.randomUUID().toString();
-        String dataId = req.getDataId();
-        String ontid = req.getOntid();
-        Integer pubKey = req.getPubKey();
-        String id = req.getId();
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("id", id);
-        dataMap.put("dataId", dataId);
+        List<String> txHexList = new ArrayList<>();
+        // 注册DataId
+        DataIdVo dataIdVo = req.getDataIdVo();
+        String dataId = dataIdVo.getDataId();
+        String ontid = dataIdVo.getOntid();
+        Integer pubKey = dataIdVo.getPubKey();
+        String id = dataIdVo.getId();
+        String dataIdTxHex = sdkUtil.makeRegIdWithController(dataId, ontid, pubKey);
+
+        txHexList.add(dataIdTxHex);
+
+        // 挂单
+        OrderVo orderVo = req.getOrderVo();
+        ContractVo contractVo = orderVo.getContractVo();
+        Map<String, Object> objMap = new HashMap<>();
+        objMap.put("id", orderVo.getId());
+        objMap.put("dataId", dataId);
+        objMap.put("state", "2");
+        objMap.put("token", orderVo.getToken());
+        objMap.put("price", orderVo.getPrice());
+        objMap.put("amount", orderVo.getAmount());
+        objMap.put("judger", JSON.toJSONString(orderVo.getOjList()));
+        String authOrderTxHex = contractService.makeTransaction(action, contractVo);
+
+        txHexList.add(authOrderTxHex);
 
         String callback = String.format(configParam.CALLBACK_URL, "api/v1/dataset/dataId/invoke");
-
-        String txHex = sdkUtil.makeRegIdWithController(dataId, ontid, pubKey);
 
         Invoke invoke = new Invoke();
         invoke.setId(uuid);
         invoke.setSuccess(0);
-        invoke.setParams(txHex);
-        invoke.setObject(JSON.toJSONString(dataMap));
+        invoke.setParams(JSON.toJSONString(txHexList));
+        invoke.setObject(JSON.toJSONString(objMap));
         invokeMapper.insert(invoke);
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", uuid);
         map.put("callback", callback);
-        map.put("message", txHex);
+        map.put("message", txHexList);
         return map;
     }
 
     @Override
-    public JSONObject invokeResult(String action, TransactionDto req) throws Exception {
+    public JSONObject invokeResult(String action, MultiTransactionDto req) throws Exception {
         Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
         if (invoke == null) {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
         }
 
-        String publickey = (String) req.getParams().get("publickey");
-        String signature = (String) req.getParams().get("signature");
-        String txHex = invoke.getParams();
-        SigVo sigVo = new SigVo();
-        sigVo.setPubKeys(publickey);
-        sigVo.setSigData(signature);
-        sigVo.setTxHex(txHex);
-        sdkUtil.sendTransaction(sigVo);
+        List<Map<String, Object>> params = req.getParams();
+        Map<String, Object> dataIdMap = params.get(0);
+        String dataIdSignature = (String) dataIdMap.get("signature");
+        String publickey = (String) dataIdMap.get("publickey");
 
-        JSONObject dataMap = JSONObject.parseObject(invoke.getObject());
-        String id = dataMap.getString("id");
-        String dataId = dataMap.getString("dataId");
+        Map<String, Object> authOrderMap = params.get(1);
+        String authOrderSignature = (String) authOrderMap.get("signature");
 
-        Map<String, Object> dataset = new HashMap<>();
-        dataset.put("dataId", dataId);
-        dataset.put("state", "1");
-        ElasticsearchUtil.updateDataById(dataset, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
+        String txHexListStr = invoke.getParams();
+        JSONArray txHexList = JSONObject.parseArray(txHexListStr);
+        // 注册DataId交易
+        SigVo dataIdSigVo = new SigVo();
+        dataIdSigVo.setPubKeys(publickey);
+        dataIdSigVo.setSigData(dataIdSignature);
+        dataIdSigVo.setTxHex(txHexList.getString(0));
+        sdkUtil.sendSyncTransaction(dataIdSigVo);
+
+        // 授权挂单交易
+        SigVo authOrderSigVo = new SigVo();
+        authOrderSigVo.setPubKeys(publickey);
+        authOrderSigVo.setSigData(authOrderSignature);
+        authOrderSigVo.setTxHex(txHexList.getString(1));
+        sdkUtil.sendTransaction(authOrderSigVo);
+
+        JSONObject map = JSONObject.parseObject(invoke.getObject());
+        String id = map.getString("id");
+        ElasticsearchUtil.updateDataById(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
 
         invoke.setSuccess(1);
         invokeMapper.updateByPrimaryKeySelective(invoke);

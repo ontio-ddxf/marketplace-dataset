@@ -119,37 +119,44 @@ public class OnsServiceImpl implements OnsService {
         String signedTx = (String) req.getParams().get("signedTx");
         Transaction transaction = Transaction.deserializeFrom(com.github.ontio.common.Helper.hexToBytes(signedTx));
         log.info("transaction:{},ons:{}",transaction,configParam.ONS_OWNER);
-        String txHash = (String) sdkUtil.sendTransaction(transaction, configParam.ONS_OWNER, false);
-
-        Executors.newCachedThreadPool().submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Object event = null;
-                    for (int i = 0; i < 5; i++) {
-                        Thread.sleep(6 * 1000);
-                        event = sdkUtil.checkEvent(txHash);
-                        if (!Helper.isEmptyOrNull(event)) {
-                            JSONObject jsonObject = JSONObject.parseObject(JSON.toJSONString(event));
-                            JSONArray notify = jsonObject.getJSONArray("Notify");
-                            String domain = notify.getJSONObject(0).getJSONArray("States").getString(1);
-                            String ontid = notify.getJSONObject(0).getJSONArray("States").getString(2);
-                            ons.setOntid(new String (com.github.ontio.common.Helper.hexToBytes(ontid)));
-                            ons.setDomain(new String (com.github.ontio.common.Helper.hexToBytes(domain)));
-                            ons.setSuccess(1);
-                            break;
+        try {
+            String txHash = (String) sdkUtil.sendTransaction(transaction, configParam.ONS_OWNER, false);
+            Executors.newCachedThreadPool().submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Object event = null;
+                        for (int i = 0; i < 5; i++) {
+                            Thread.sleep(6 * 1000);
+                            event = sdkUtil.checkEvent(txHash);
+                            if (!Helper.isEmptyOrNull(event)) {
+                                JSONObject jsonObject = JSONObject.parseObject(JSON.toJSONString(event));
+                                JSONArray notify = jsonObject.getJSONArray("Notify");
+                                String domain = notify.getJSONObject(0).getJSONArray("States").getString(1);
+                                String ontid = notify.getJSONObject(0).getJSONArray("States").getString(2);
+                                ons.setOntid(new String (com.github.ontio.common.Helper.hexToBytes(ontid)));
+                                ons.setDomain(new String (com.github.ontio.common.Helper.hexToBytes(domain)));
+                                ons.setSuccess(1);
+                                break;
+                            }
+                            ons.setSuccess(0);
                         }
-                        ons.setSuccess(0);
+                        log.info("event:{}", event);
+                        ons.setTxHash(txHash);
+                        onsMapper.updateByPrimaryKeySelective(ons);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    log.info("event:{}", event);
-                    ons.setTxHash(txHash);
-                    onsMapper.updateByPrimaryKeySelective(ons);
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
-            }
-        });
-        return new JSONObject();
+            });
+            return new JSONObject();
+        } catch (Exception e) {
+            log.error("catch exception",e);
+            ons.setSuccess(0);
+            onsMapper.updateByPrimaryKeySelective(ons);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
+
     }
 
     @Override
@@ -188,12 +195,12 @@ public class OnsServiceImpl implements OnsService {
         String message = "hello " + System.currentTimeMillis();
 
         String callback = String.format(configParam.CALLBACK_URL,"api/v1/ons/login/callback");
-        String onsListUrl = String.format(configParam.CALLBACK_URL,"api/v1/ons/list");
+        String domainListUrl = String.format(configParam.CALLBACK_URL,"api/v1/ons/list");
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
         map.put("message", message);
         map.put("callback", callback);
-        map.put("ons_list_url", onsListUrl);
+        map.put("domain_list_url", domainListUrl);
         return map;
     }
 
