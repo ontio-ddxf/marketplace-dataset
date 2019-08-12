@@ -79,7 +79,7 @@ public class OrderController {
 //        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), txHash);
 //    }
 
-    @ApiOperation(value = "构造挂单的交易", notes = "构造挂单的交易", httpMethod = "POST")
+    @ApiOperation(value = "构造下单的交易", notes = "构造下单的交易", httpMethod = "POST")
     @PostMapping("/purchase")
     public Result purchaseOrder(@RequestBody PurchaseVo req) throws Exception {
         String action = "purchaseOrder";

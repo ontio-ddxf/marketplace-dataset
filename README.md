@@ -1,34 +1,44 @@
-* 1. [Restful Api 需求](#RestfulApi)
-* 2. [商品接口](#商品接口)
-	* 2.1. [插入或根据id更新数据到ElasticSearch](#插入或根据id更新数据到ElasticSearch)
-	* 2.2. [根据ID返回数据](#根据ID返回数据)
-	* 2.3. [根据卖家ontid返回数据](#根据卖家ontid返回数据)
-	* 2.4. [注册dataId](#注册dataId)
-	* 2.5. [查询token余额](#查询token余额)
-	* 2.6. [根据dataId查询数据](#根据dataId查询数据)
-* 3. [认证接口](#认证接口)
-	* 3.1. [获取认证方列表](#获取认证方列表)
-	* 3.2. [认证人获取待认证列表](#认证人获取待认证列表)
-	* 3.3. [认证数据](#认证数据)
-* 4. [订单接口](#订单接口)
-	* 4.1. [挂单授权MP生成token](#挂单授权MP生成token)
-	* 4.2. [查询所有挂单](#查询所有挂单)
-	* 4.3. [查询自己的订单](#查询自己的订单)
-	* 4.4. [购买数据](#购买数据)
-    * 4.5. [查看数据](#查看数据)
-    * 4.6. [查询当前tokenId](#查询当前tokenId)
-    * 4.7. [查询token剩余流转次数和访问次数](#查询token剩余流转次数和访问次数)
-    * 4.8. [二次挂单创建order](#二次挂单创建order)
-    * 4.9. [查询二手商品](#查询二手商品)
-    * 4.10. [购买二手商品](#购买二手商品)
-* 5. [仲裁接口](#仲裁接口)
-	* 5.1. [获取仲裁方列表](#获取仲裁方列表)
-	* 5.2. [获取待仲裁列表](#获取待仲裁列表)
-	* 5.3. [发送仲裁结果](#发送仲裁结果)
-* 6. [合约调用接口](#合约调用接口)
-	* 6.1. [构造交易](#构造交易)
-	* 6.2. [发送交易](#发送交易)
-	* 6.3. [注册dataId](#注册dataId)
+* 0. [Restful Api 需求](#RestfulApi)
+* 1. [注册接口](#注册接口)
+	* 1.1. [注册ons](#注册ons)
+	* 1.2. [获取注册ons交易参数](#获取注册ons交易参数)
+	* 1.3. [发送注册交易](#发送注册交易)
+	* 1.4. [查询注册是否成功](#查询注册是否成功)
+* 2. [登录接口](#登录接口)
+	* 2.1. [获取message](#获取message)
+	* 2.2. [根据ontid和主域名获取ons列表](#根据ontid和主域名获取ons列表)
+	* 2.3. [回调验证](#回调验证)
+	* 2.4. [查询登录是否成功](#查询登录是否成功)
+* 3. [商品接口](#商品接口)
+	* 3.1. [插入或根据id更新数据到ElasticSearch](#插入或根据id更新数据到ElasticSearch)
+	* 3.2. [根据ID返回数据](#根据ID返回数据)
+	* 3.3. [根据卖家ontid返回数据](#根据卖家ontid返回数据)
+	* 3.4. [注册dataId](#注册dataId)
+	* 3.5. [回调返回交易签名数据并发送交易](#回调返回交易签名数据并发送交易)
+	* 3.6. [根据dataId查询数据](#根据dataId查询数据)
+* 4. [认证接口](#认证接口)
+	* 4.1. [获取认证方列表](#获取认证方列表)
+	* 4.2. [认证人获取待认证列表](#认证人获取待认证列表)
+	* 4.3. [认证数据](#认证数据)
+* 5. [订单接口](#订单接口)
+	* 5.1. [挂单授权MP生成token](#挂单授权MP生成token)
+	* 5.2. [查询所有挂单](#查询所有挂单)
+	* 5.3. [查询自己的订单](#查询自己的订单)
+	* 5.4. [购买数据](#购买数据)
+    * 5.5. [查看数据](#查看数据)
+    * 5.6. [查询当前tokenId](#查询当前tokenId)
+    * 5.7. [查询token剩余流转次数和访问次数](#查询token剩余流转次数和访问次数)
+    * 5.8. [二次挂单创建order](#二次挂单创建order)
+    * 5.9. [查询二手商品](#查询二手商品)
+    * 5.10. [购买二手商品](#购买二手商品)
+* 6. [仲裁接口](#仲裁接口)
+	* 6.1. [获取仲裁方列表](#获取仲裁方列表)
+	* 6.2. [获取待仲裁列表](#获取待仲裁列表)
+	* 6.3. [发送仲裁结果](#发送仲裁结果)
+* 7. [合约调用接口](#合约调用接口)
+	* 7.1. [构造交易](#构造交易)
+	* 7.2. [发送交易](#发送交易)
+	* 7.3. [注册dataId](#注册dataId)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -49,6 +59,328 @@ dataset是一个数据集合，数据提供方可以插入数据到搜索引擎�
 1. 数据提供方插入数据或根据id更新数据。
 2. 根据Tag查询并分页展示。
 3. 根据ID查询数据详细信息。
+
+## 注册接口
+
+###  注册ons
+
+```
+url：/api/v1/ons/{ons}
+method：Get
+```
+
+请求：
+| Field Name | Type | Description |
+|---|---|---|
+|ons         |String|需要注册的域名|
+
+响应：
+
+```source-json
+{
+    "action": "registerDomain",
+    "error": 0,
+    "desc": "SUCCESS",
+    "result": {
+        "callback": "http://192.168.3.121:7878/api/v1/ons/invoke",
+        "id": "a0308abd-d57e-41fe-9554-5fe6435db2fe",
+        "qrcodeUrl": "http://192.168.3.121:7878/api/v1/ons/qrcode/a0308abd-d57e-41fe-9554-5fe6435db2fe"
+    },
+    "version": "v1"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| error      | int    | 错误码                        |
+| desc       | String | 成功为SUCCESS，失败为错误描述 |
+| result    | String | 成功返回记录信息，失败返回""  |
+| callback  | String | 回调url地址                   |
+| id        | String | 记录的id                      |
+| qrcodeUrl | String | 获取交易参数的地址            |
+| version   | String | 版本号                        |
+
+
+###  获取注册ons交易参数
+
+```
+url：/api/v1/ons/qrcode/{id}
+method：Get
+```
+
+请求：
+| Field Name | Type | Description |
+|---|---|---|
+|id         |String|记录的id|
+
+响应：
+
+```source-json
+{
+	"action": "signTransaction",
+	"id": "80edaf95-4706-41f1-a25b-57447e4e3094",
+	"params": {
+		"invokeConfig": {
+			"gasLimit": 40000,
+			"contractHash": "fb12993d6f13a2ec911f3bbfe534be90e4deeca4",
+			"functions": [{
+				"args": [{
+					"name": "fulldomain",
+					"value": "String:ning.on.ont"
+				}, {
+					"name": "registerdid",
+					"value": "String:%ontid"
+				}, {
+					"name": "idx",
+					"value": 1
+				}, {
+					"name": "validto",
+					"value": -1
+				}],
+				"operation": "registerDomain"
+			}],
+			"payer": "AcdBfqe7SG8xn4wfGrtUbbBDxw2x1e8UKm",
+			"gasPrice": 500
+		},
+		"ontidSign": true,
+		"callback": "http://192.168.3.121:7878/api/v1/ons/invoke"
+	},
+	"version": "v1.0.0"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| id        | String | 记录的id                      |
+| params    | Object | 交易参数                      |
+| version   | String | 版本号                        |
+
+
+###  发送注册交易
+
+```
+url：/api/v1/ons/invoke
+method：Post
+```
+
+请求：
+```source-json
+{
+	"action": "invoke",
+	"id": "10ba038e-48da-487b-96e8-8d3b99b6d18a",
+	"version": "v1.0.0",
+	"params": {
+		"signedTx": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000"
+	}
+}
+```
+| Field Name | Type | Description |
+|---|---|---|
+| action    | String | 动作标志                      |
+| id        | String | 记录的id                      |
+| version   | String | 版本号                        |
+| params    | String | 参数                          |
+| signedTx  | String | 签名后的交易hash              |
+
+
+###  查询注册是否成功
+
+```
+url：/api/v1/ons/result/{id}
+method：Get
+```
+
+请求：
+| Field Name | Type | Description |
+|---|---|---|
+|id          |String|记录的id     |
+
+响应：
+
+```source-json
+{
+    "action": "registerResult",
+    "error": 0,
+    "desc": "SUCCESS",
+    "result": "1",
+    "version": "v1"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| error      | int    | 错误码                        |
+| desc       | String | 成功为SUCCESS，失败为错误描述 |
+| result    | String | 成功返回"1"，失败返回"0"      |
+| version   | String | 版本号                        |
+
+
+## 登录接口
+
+###  获取message
+
+```
+url：/api/v1/ons/login
+method：Get
+```
+
+响应：
+
+```source-json
+{
+    "action": "getMessage",
+    "error": 0,
+    "desc": "SUCCESS",
+    "result": {
+        "callback": "http://192.168.3.121:7878/api/v1/login/callback",
+        "id": "e1471264-b2d1-45fa-9eb5-1a8ad6ce2b6c",
+        "message": "hello 1561537241660"
+    },
+    "version": "v1"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| error      | int    | 错误码                        |
+| desc       | String | 成功为SUCCESS，失败为错误描述 |
+| result    | String | 成功返回记录信息，失败返回""  |
+| callback  | String | 回调url地址                   |
+| id        | String | 记录的id                      |
+| message   | String | 随机消息                      |
+| version   | String | 版本号                        |
+
+###  根据ontid和主域名获取ons列表
+
+```
+url：/api/v1/ons/list?domain=on.ont&ontid=did:ont:AGWYQHd4bzyhrbpeYCMsxXYQcJo95VtR5q
+method：Get
+```
+
+请求：
+
+| Field Name | Type | Description |
+|---|---|---|
+| ontid    | String | 用户ontid                      |
+| domain   | String | 网站主域名                     |
+
+响应：
+
+```source-json
+{
+    "action": "getOnsList",
+    "error": 0,
+    "desc": "SUCCESS",
+    "result": [
+        "test.ont.io",
+        "2222.ont.io",
+        "1111.ont.io"
+    ],
+    "version": "v1"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| error      | int    | 错误码                        |
+| desc       | String | 成功为SUCCESS，失败为错误描述 |
+| result    | String | 成功返回域名列表，失败返回""  |
+| version   | String | 版本号                        |
+
+
+###  回调验证
+
+```
+url：/api/v1/ons/login/callback
+method：Post
+```
+
+请求：
+```source-json
+{
+	"action": "login",
+	"version": "v1.0.0",
+	"id": "10ba038e-48da-487b-96e8-8d3b99b6d18a",
+	"params": {
+		"type": "ontid",
+		"user": "did:ont:AGWYQHd4bzyhrbpeYCMsxXYQcJo95VtR5q",
+		"domain": "test.ont.io",
+		"message": "helloworld",
+		"publickey": "0205c8fff4b1d21f4b2ec3b48cf88004e38402933d7e914b2a0eda0de15e73ba61",
+		"signature": "01abd7ea9d79c857cd838cabbbaad3efb44a6fc4f5a5ef52ea8461d6c055b8a7cf324d1a58962988709705cefe40df5b26e88af3ca387ec5036ec7f5e6640a1754"
+	}
+}
+```
+| Field Name | Type | Description |
+|---|---|---|
+| action    | String | 动作标志                      |
+| version   | String | 版本号                        |
+| id        | String | 记录的id                      |
+| params    | Object | 回调验证参数                  |
+| type      | String | 类型                          |
+| user      | String | 用户ontid                     |
+| domain    | String | 用户域名                      |
+| message   | String | 验签消息                      |
+| publickey | String | 公钥                          |
+| signature | String | 签名数据                      |
+
+响应：
+
+```source-json
+{
+    "result": true,
+    "action": "login",
+    "id": "10ba038e-48da-487b-96e8-8d3b99b6d18a",
+    "error": 0,
+    "desc": "SUCCESS"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| error     | int    | 错误码                        |
+| desc      | String | 成功为SUCCESS，失败为错误描述 |
+| result    | String | 成功返回true，失败返回""      |
+| version   | String | 版本号                        |
+
+
+###  查询登录是否成功
+
+```
+url：/api/v1/ons/login/result/{id}
+method：Get
+```
+
+请求：
+| Field Name | Type | Description |
+|---|---|---|
+|id          |String|记录的id     |
+
+响应：
+
+```source-json
+{
+    "action": "loginResult",
+    "error": 0,
+    "desc": "SUCCESS",
+    "result": {
+        "result": "1",
+        "ons": "test.ont.io",
+        "ontid": "did:ont:AGWYQHd4bzyhrbpeYCMsxXYQcJo95VtR5q"
+    },
+    "version": "v1"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action    | String | 动作标志                      |
+| error      | int    | 错误码                        |
+| desc       | String | 成功为SUCCESS，失败为错误描述 |
+| result    | String | 成功返回"1"，失败返回"0",没有查到信息返回null(需要继续请求)      |
+| ons       | String | 用户域名                      |
+| ontid     | String | 用户ontid                     |
+| version   | String | 版本号                        |
+
 
 ## 商品接口
 
@@ -227,25 +559,82 @@ method：POST
 
 ```source-json
 {
-	"id": "fa20c972950f46cdba99ca521f0c49fa",
-	"dataId": "did:ont:Aac8jSxyF81hxFEyRuiXSp5TvzN9MVqAoT",
-	"sigDataVo": {
-		"txHex": "00d1ed6aa95cf401000000000000409c000000000000f5f7b705b03ae46e48f89c2b99e79fa4391536fe6e0360ea00016f51c10331313151c114000000000000000000000000000000000000000214010b5816b180ffb41e3889b6f42aeaf31fd63209143fc9fa9491df7e93b94db2df99e6af2d67ad34b756c10973656e64546f6b656e67bae44577a468b5bfd00ebbaba7d91204204828470000",
-		"pubKeys": "03edaa022ce0f2020ec92e68ce47de932a804b4a5f240989fb612b63685d1bc8da",
-		"sigData": "01e42dbefd28087bb42ad8667e6ed3a56e23cec70b0289c7d40e22948d7985bbc0713c1f5f19d92b706b6fe57a7ceaa23fc2eba99b0673160d271ee43ad55ece19"
+{
+	"dataIdVo": {
+		"dataId": "did:ont:ANYEUuWmPFrHM8XPYLJf2Z1PGAKSyBJ2G9",
+		"id": "b7a6d295f5e74b34a4911d5db132f3e6",
+		"ontid": "did:ont:ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR",
+		"pubKey": 1
+	},
+	"orderVo": {
+		"id": "b7a6d295f5e74b34a4911d5db132f3e6",
+		"amount": 9999,
+		"contractVo": {
+			"argsList": [{
+				"name": "dataId",
+				"value": "String:did:ont:ANYEUuWmPFrHM8XPYLJf2Z1PGAKSyBJ2G9"
+			}, {
+				"name": "index",
+				"value": 1
+			}, {
+				"name": "symbol",
+				"value": "String:NTF"
+			}, {
+				"name": "name",
+				"value": "String:newCon"
+			}, {
+				"name": "authAmount ",
+				"value": 9999
+			}, {
+				"name": "price",
+				"value": 1
+			}, {
+				"name": "transferCount",
+				"value": 999
+			}, {
+				"name": "accessCount",
+				"value": 999
+			}, {
+				"name": "expireTime",
+				"value": 0
+			}, {
+				"name": "makerTokenHash",
+				"value": "ByteArray:3e7d3d82df5e1f951610ffa605af76846802fbae"
+			}, {
+				"name": "makerReceiveAddress",
+				"value": "Address:ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR"
+			}, {
+				"name": "mpReceiveAddress",
+				"value": "Address:AR9NDnK3iMSZodbENnt7eX5TJ2s27fnHra"
+			}, {
+				"name": "OJList",
+				"value": ["Address:ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR"]
+			}],
+			"contractHash": "f261464e2cd21c2ab9c06fa3e627ce03c7715ec9",
+			"method": "authOrder"
+		},
+
+		"ojList": [
+			"ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR"
+		],
+		"price": "1",
+		"token": "ong"
 	}
 }
-
+}
 ```
 
 | Field Name | Type | Description |
 |---|---|---|
 |id|String|数据id|
 |dataId|String|为数据生成的dataId|
-|sigDataVo|Map|注册dataId交易签名|
-|txHex|String|交易hex|
-|pubKeys|String|签名公钥|
-|sigData|String|签名数据|
+|ontid|String|用户ontid|
+|pubKeys|String|签名公钥,默认1|
+|amount|int|授权数量|
+|ojList|List|仲裁者列表|
+|price|String|价格|
+|token|String|默认ong|
+|orderVo|Obj|授权上架参数|
 
 响应：
 
@@ -254,7 +643,7 @@ method：POST
     "action": "createDataId",
     "error": 0,
     "desc": "SUCCESS",
-    "result": "7d7c4f01e0fa3c3203424644697b8d2266f337fb25b3ae89bc9575194a5d5ce7",
+    "result": ["7d7c4f01e0fa3c3203424644697b8d2266f337fb25b3ae89bc9575194a5d5ce7","7d7c4f01e0fa3c3203424644697b8d2266f337fb25b3ae89bc9575194a5d5ce7"],
     "version": "v1"
 }
 ```
@@ -264,41 +653,52 @@ method：POST
 | action | String | 动作标志 |
 | error | int | 错误码 |
 | desc | String | 成功为SUCCESS，失败为错误描述 |
-| result | List | 注册dataId和生成tokenId的交易hash |
+| result | List | 注册dataId和授权上架的交易hex |
 | version   | String | 版本号                        |
 
 
-###  查询token余额
+###  回调返回交易签名数据并发送交易
 
 ```
-url：/api/v1/dataset/token/balance/{address}/{tokenId}
-method：GET
+url：/api/v1/dataset/dataId/invoke
+method：Post
 ```
-
+请求
+````json
+{
+	"action": "string",
+	"id": "string",
+	"params": [{
+		"type": "ontid or address",
+		"user": "did:ont:AUEKhXNsoAT27HJwwqFGbpRy8QLHUMBMPz or AUEKhXNsoAT27HJwwqFGbpRy8QLHUMBMPz",
+		"message": "helloworld",
+		"publickey": "0205c8fff4b1d21f4b2ec3b48cf88004e38402933d7e914b2a0eda0de15e73ba61",
+		"signature": "01abd7ea9d79c857cd838cabbbaad3efb44a6fc4f5a5ef52ea8461d6c055b8a7cf324d1a58962988709705cefe40df5b26e88af3ca387ec5036ec7f5e6640a1754"
+	}, {
+		"type": "ontid or address",
+		"user": "did:ont:AUEKhXNsoAT27HJwwqFGbpRy8QLHUMBMPz or AUEKhXNsoAT27HJwwqFGbpRy8QLHUMBMPz",
+		"message": "helloworld",
+		"publickey": "0205c8fff4b1d21f4b2ec3b48cf88004e38402933d7e914b2a0eda0de15e73ba61",
+		"signature": "01abd7ea9d79c857cd838cabbbaad3efb44a6fc4f5a5ef52ea8461d6c055b8a7cf324d1a58962988709705cefe40df5b26e88af3ca387ec5036ec7f5e6640a1754"
+	}],
+	"version": "string"
+}
+````
 | Field Name | Type | Description |
 |---|---|---|
-|address|String|查询的ontid地址|
-|tokenId|Long|tokenId|
+|publickey|String|ontid公钥|
+|signature|String|签名数据|
 
 响应：
 
 ```source-json
 {
-    "action": "getBalanceOfToken",
-    "error": 0,
-    "desc": "SUCCESS",
-    "result": 999,
-    "version": "v1"
 }
 ```
 
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
-| action | String | 动作标志 |
-| error | int | 错误码 |
-| desc | String | 成功为SUCCESS，失败为错误描述 |
-| result | List | 该地址下token的余额 |
-| version   | String | 版本号                        |
+|  | obj | 成功返回空{}，失败返回错误信息 |
 
 
 ###  根据dataId查询数据

@@ -174,57 +174,6 @@ public class DatasetController2 {
         return datasetService.invokeResult(action,req);
     }
 
-    @ApiOperation(value = "卖家注册dataId", notes = "卖家注册dataId", httpMethod = "POST")
-//    @PostMapping("/dataId")
-    public Result createDataIdAndTokenId(@RequestBody TokenIdVo req) {
-        String action = "createDataId";
-        log.info(action);
-        String id = req.getId();
-        Map<String, Object> data = ElasticsearchUtil.searchDataById(Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id, null);
-        Object dataId = data.get("dataId");
-        if (!"".equals(dataId)) {
-            throw new MarketplaceException(action, ErrorInfo.ALREADY_EXIST.descCN(),ErrorInfo.ALREADY_EXIST.descEN(),ErrorInfo.ALREADY_EXIST.code());
-        }
-        try {
-            // 发送交易
-            String dataIdTxHash = contractService.sendTransaction(action, req.getSigDataVo());
-
-            // 本地存储
-            Map<String,Object> dataset = new HashMap<>();
-            dataset.put("dataId",req.getDataId());
-            dataset.put("state","1");
-            ElasticsearchUtil.updateDataById(dataset,Constant.ES_INDEX_DATASET,Constant.ES_TYPE_DATASET, id);
-            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), dataIdTxHash);
-        } catch (Exception e) {
-            log.error("catch exception:",e);
-            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(),ErrorInfo.PARAM_ERROR.descEN(),ErrorInfo.PARAM_ERROR.code());
-        }
-    }
-
-    @ApiOperation(value = "查询token余额", notes = "查询token余额", httpMethod = "GET")
-    @GetMapping("/token/balance/{address}/{tokenId}")
-    public Result getBalanceOfToken(@PathVariable String address,@PathVariable Long tokenId) {
-        String action = "getBalanceOfToken";
-        Map<String,Object> arg0 = new HashMap<>();
-        arg0.put("name","account");
-        arg0.put("value","Address:"+address);
-        Map<String,Object> arg1 = new HashMap<>();
-        arg1.put("name","tokenId");
-        arg1.put("value",tokenId);
-        List<Map<String,Object>> argList = new ArrayList<>();
-        argList.add(arg0);
-        argList.add(arg1);
-        String params = Helper.getParams("", configParam.CONTRACT_HASH_DTOKEN, "balanceOf", argList, configParam.PAYER_ADDRESS);
-        try {
-            JSONObject jsonObject = (JSONObject) sdkUtil.invokeContract(params, null, null, true);
-            int balance = Integer.parseInt(com.github.ontio.common.Helper.reverse(jsonObject.getString("Result")), 16);
-            return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), balance);
-        } catch (Exception e) {
-            log.error("catch exception:",e);
-        }
-        return null;
-    }
-
     @ApiOperation(value = "根据dataId查询数据", notes = "根据dataId查询数据", httpMethod = "GET")
     @GetMapping("/data/{dataId}")
     public Result getDatabyDataId(@PathVariable String dataId) {
