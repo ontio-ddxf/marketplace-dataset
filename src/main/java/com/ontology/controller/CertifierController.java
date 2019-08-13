@@ -57,30 +57,29 @@ public class CertifierController {
         for (Map<String, Object> result:certificationList) {
             ElasticsearchUtil.formatResult(result);
         }
-        return new Result(action,0, "SUCCESS", esPage);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), esPage);
     }
 
     @ApiOperation(value = "获取message", notes = "获取message", httpMethod = "GET")
     @GetMapping("/message/{id}")
     public Result getMessage(@PathVariable String id) {
-        String action = "getMessage";
+        String action = "getCertificateMessage";
         Map<String,Object> result = certifierService.getMessage(id);
-        return new Result(action,0, "SUCCESS", result);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), result);
     }
 
-    @ApiOperation(value = "回调验证", notes = "回调验证", httpMethod = "POST")
+    @ApiOperation(value = "认证回调验证", notes = "认证回调验证", httpMethod = "POST")
     @PostMapping("/callback")
-    public Map<String,Object> callback(@RequestBody MessageDto req) {
+    public Result callback(@RequestBody MessageDto req) {
         String action = "certificate";
-        Map<String,Object> result = certifierService.callback(action,req);
-        return result;
+        return certifierService.callback(action,req);
     }
 
-    @ApiOperation(value = "查询登录是否成功", notes = "查询登录是否成功", httpMethod = "GET")
+    @ApiOperation(value = "查询认证是否成功", notes = "查询认证是否成功", httpMethod = "GET")
     @GetMapping("/result/{id}")
-    public Result registerResult(@PathVariable String id) {
+    public Result certificateResult(@PathVariable String id) {
         String action = "certificateResult";
         String isSuccessful = certifierService.certificateResult(action,id);
-        return new Result(action,0, "SUCCESS", isSuccessful);
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), isSuccessful);
     }
 }

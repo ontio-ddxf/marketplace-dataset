@@ -1,5 +1,6 @@
 package com.ontology.service.impl;
 
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.MessageDto;
 import com.ontology.entity.Certifier;
 import com.ontology.entity.Invoke;
@@ -54,7 +55,7 @@ public class CertifierServiceImpl implements CertifierService {
     }
 
     @Override
-    public Map<String, Object> callback(String action, MessageDto req) {
+    public Result callback(String action, MessageDto req) {
         String uuid = req.getId();
         Invoke invoke = invokeMapper.selectByPrimaryKey(uuid);
         String id = invoke.getObject();
@@ -69,13 +70,7 @@ public class CertifierServiceImpl implements CertifierService {
         invoke.setSuccess(1);
         invokeMapper.updateByPrimaryKeySelective(invoke);
 
-        Map<String, Object> result = new HashMap<>();
-        map.put("action", action);
-        map.put("id", id);
-        map.put("error", 0);
-        map.put("desc", "SUCCESS");
-        map.put("result", true);
-        return result;
+        return new Result(action,ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), true);
     }
 
     @Override

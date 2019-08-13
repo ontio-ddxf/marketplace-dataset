@@ -2,23 +2,18 @@ package com.ontology.service.impl;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.ontology.controller.vo.ContractVo;
-import com.ontology.controller.vo.DataIdVo;
-import com.ontology.controller.vo.SigVo;
-import com.ontology.controller.vo.TransactionDto;
+import com.ontology.controller.vo.*;
 import com.ontology.entity.Invoke;
 import com.ontology.exception.MarketplaceException;
 import com.ontology.mapper.InvokeMapper;
 import com.ontology.service.ContractService;
-import com.ontology.utils.ConfigParam;
-import com.ontology.utils.ErrorInfo;
-import com.ontology.utils.Helper;
-import com.ontology.utils.SDKUtil;
+import com.ontology.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Matcher;
 
 
 @Slf4j
@@ -40,7 +35,7 @@ public class ContractServiceImpl implements ContractService {
         String payerAddr = configParam.PAYER_ADDRESS;
         String params = Helper.getParams("", contractHash, method, argsList, payerAddr);
         String txHex = (String) sdk.makeTransaction(params);
-        log.info("txHex:{}",txHex);
+        log.info("txHex:{}", txHex);
         return txHex;
     }
 
@@ -73,6 +68,8 @@ public class ContractServiceImpl implements ContractService {
             return "1";
         } else if (success != null && success.equals(0)) {
             return "0";
+        } else if (success != null && success.equals(2)) {
+            return "2";
         }
         return null;
     }
@@ -102,19 +99,55 @@ public class ContractServiceImpl implements ContractService {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
         }
 
-        String publickey = (String) req.getParams().get("publickey");
-        String signature = (String) req.getParams().get("signature");
-        String txHex = invoke.getParams();
-        SigVo sigVo = new SigVo();
-        sigVo.setPubKeys(publickey);
-        sigVo.setSigData(signature);
-        sigVo.setTxHex(txHex);
-        sdk.sendTransaction(sigVo);
+        try {
+            String publickey = (String) req.getParams().get("publickey");
+            String signature = (String) req.getParams().get("signature");
+            String txHex = invoke.getParams();
+            SigVo sigVo = new SigVo();
+            sigVo.setPubKeys(publickey);
+            sigVo.setSigData(signature);
+            sigVo.setTxHex(txHex);
+            sdk.sendTransaction(sigVo);
 
-        invoke.setSuccess(1);
-        invokeMapper.updateByPrimaryKeySelective(invoke);
+            invoke.setSuccess(1);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
 
-        return new JSONObject();
+            return new JSONObject();
+        } catch (Exception e) {
+            log.error("catch error:", e);
+            invoke.setSuccess(2);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
+
     }
 
+    @Override
+    public void postHonor(String action, HonorVo req) throws Exception {
+        String ontid = req.getOntid();
+        int value = req.getValue();
+
+        Matcher matcher = ConstantParam.ONTID_PATTERN.matcher(ontid);
+        matcher.matches();
+        if (!matcher.matches()) {
+            throw new MarketplaceException(action, ErrorInfo.IDENTITY_VERIFY_FAILED.descCN(), ErrorInfo.IDENTITY_VERIFY_FAILED.descEN(), ErrorInfo.IDENTITY_VERIFY_FAILED.code());
+        }
+
+        Map<String, Object> arg0 = new HashMap<>();
+        arg0.put("name", "from_acct");
+        arg0.put("value", "Address:ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR");
+        Map<String, Object> arg1 = new HashMap<>();
+        arg1.put("name", "to_acct");
+        arg1.put("value", "Address:" + ontid.substring(8));
+        Map<String, Object> arg2 = new HashMap<>();
+        arg2.put("name", "amount");
+        arg2.put("value", value);
+        List<Map<String, Object>> argList = new ArrayList<>();
+        argList.add(arg0);
+        argList.add(arg1);
+        argList.add(arg2);
+        String params = Helper.getParams(ontid, configParam.CONTRACT_HASH_OBP, "transfer", argList, "ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR");
+
+        sdk.invokeContract(params, configParam.ONS_OWNER, false);
+    }
 }

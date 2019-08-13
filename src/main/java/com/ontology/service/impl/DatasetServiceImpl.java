@@ -94,26 +94,37 @@ public class DatasetServiceImpl implements DatasetService {
 
         String txHexListStr = invoke.getParams();
         JSONArray txHexList = JSONObject.parseArray(txHexListStr);
-        // 注册DataId交易
-        SigVo dataIdSigVo = new SigVo();
-        dataIdSigVo.setPubKeys(publickey);
-        dataIdSigVo.setSigData(dataIdSignature);
-        dataIdSigVo.setTxHex(txHexList.getString(0));
-        sdkUtil.sendSyncTransaction(dataIdSigVo);
 
-        // 授权挂单交易
-        SigVo authOrderSigVo = new SigVo();
-        authOrderSigVo.setPubKeys(publickey);
-        authOrderSigVo.setSigData(authOrderSignature);
-        authOrderSigVo.setTxHex(txHexList.getString(1));
-        sdkUtil.sendTransaction(authOrderSigVo);
+        try {
+            // 注册DataId交易
+            SigVo dataIdSigVo = new SigVo();
+            dataIdSigVo.setPubKeys(publickey);
+            dataIdSigVo.setSigData(dataIdSignature);
+            dataIdSigVo.setTxHex(txHexList.getString(0));
+            sdkUtil.sendSyncTransaction(dataIdSigVo);
+            // 授权挂单交易
+            SigVo authOrderSigVo = new SigVo();
+            authOrderSigVo.setPubKeys(publickey);
+            authOrderSigVo.setSigData(authOrderSignature);
+            authOrderSigVo.setTxHex(txHexList.getString(1));
+            sdkUtil.sendTransaction(authOrderSigVo);
+            JSONObject map = JSONObject.parseObject(invoke.getObject());
+            String id = map.getString("id");
+            ElasticsearchUtil.updateDataById(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
 
-        JSONObject map = JSONObject.parseObject(invoke.getObject());
-        String id = map.getString("id");
-        ElasticsearchUtil.updateDataById(map, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
+            invoke.setSuccess(1);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
+            return new JSONObject();
+        } catch (Exception e) {
+            log.error("catch error:",e);
+            invoke.setSuccess(2);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
 
-        invoke.setSuccess(1);
-        invokeMapper.updateByPrimaryKeySelective(invoke);
-        return new JSONObject();
+
+
+
+
     }
 }

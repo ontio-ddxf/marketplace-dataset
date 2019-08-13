@@ -16,6 +16,9 @@ public class ConfigParam {
 	@Value("${payer.addr}")
 	public String PAYER_ADDRESS;
 
+	@Value("${contract.hash.obp}")
+	public String CONTRACT_HASH_OBP;
+
 	@Value("${contract.hash.ons}")
 	public String CONTRACT_HASH_ONS;
 

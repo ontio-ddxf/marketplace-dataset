@@ -158,6 +158,22 @@ public class SDKUtil {
         return txs1[0].hash().toString();
     }
 
+    public Object invokeContract(String params, String wif, boolean preExec) throws Exception{
+        OntSdk ontSdk = getOntSdk();
+        Transaction[] txs1 = ontSdk.makeTransactionByJson(params);
+        byte[] bytes = Account.getPrivateKeyFromWIF(wif);
+        Account account = new Account(bytes, ontSdk.getWalletMgr().getSignatureScheme());
+        ontSdk.addSign(txs1[0],account);
+        Object result = null;
+        if(preExec) {
+            result = ontSdk.getConnect().sendRawTransactionPreExec(txs1[0].toHexString());
+            return result;
+        }else {
+            result = ontSdk.getConnect().sendRawTransaction(txs1[0].toHexString());
+        }
+        return txs1[0].hash().toString();
+    }
+
     public Object checkEvent(String txHash) throws Exception {
         OntSdk ontSdk = getOntSdk();
         Object event = ontSdk.getConnect().getSmartCodeEvent(txHash);

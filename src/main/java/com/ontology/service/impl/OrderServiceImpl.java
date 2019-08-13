@@ -489,23 +489,31 @@ public class OrderServiceImpl implements OrderService {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
         }
 
-        String publickey = (String) req.getParams().get("publickey");
-        String signature = (String) req.getParams().get("signature");
-        String txHex = invoke.getParams();
-        SigVo sigVo = new SigVo();
-        sigVo.setPubKeys(publickey);
-        sigVo.setSigData(signature);
-        sigVo.setTxHex(txHex);
-        sdkUtil.sendTransaction(sigVo);
+        try {
+            String publickey = (String) req.getParams().get("publickey");
+            String signature = (String) req.getParams().get("signature");
+            String txHex = invoke.getParams();
+            SigVo sigVo = new SigVo();
+            sigVo.setPubKeys(publickey);
+            sigVo.setSigData(signature);
+            sigVo.setTxHex(txHex);
+            sdkUtil.sendTransaction(sigVo);
 
-        JSONObject orderMap = JSONObject.parseObject(invoke.getObject());
-        String id = orderMap.getString("id");
-        ElasticsearchUtil.updateDataById(orderMap, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
+            JSONObject orderMap = JSONObject.parseObject(invoke.getObject());
+            String id = orderMap.getString("id");
+            ElasticsearchUtil.updateDataById(orderMap, Constant.ES_INDEX_DATASET, Constant.ES_TYPE_DATASET, id);
 
-        invoke.setSuccess(1);
-        invokeMapper.updateByPrimaryKeySelective(invoke);
+            invoke.setSuccess(1);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
 
-        return new JSONObject();
+            return new JSONObject();
+        } catch (Exception e) {
+            log.error("catch error:",e);
+            invoke.setSuccess(2);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
+
     }
 
     @Override
@@ -597,7 +605,7 @@ public class OrderServiceImpl implements OrderService {
         long version = response.getVersion();
         int amount = (int) data.get("amount");
         Map<String, Object> map = new HashMap<>();
-        amount--;
+        amount = amount--;
         if (amount <= 0) {
             map.put("state", "4");
         }
@@ -617,6 +625,9 @@ public class OrderServiceImpl implements OrderService {
             orderMap.put("boughtTime", createTime);
             orderMap.put("expireTime", expireDate);
             ElasticsearchUtil.addData(orderMap, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
+            invoke.setSuccess(1);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
+            return new JSONObject();
         } catch (Exception e) {
             log.error("catch exception:", e);
             // 下单失败手动回滚商品数量
@@ -638,10 +649,11 @@ public class OrderServiceImpl implements OrderService {
                     log.info("update failed, try again");
                 }
             }
+            invoke.setSuccess(2);
+            invokeMapper.updateByPrimaryKeySelective(invoke);
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
         }
-        invoke.setSuccess(1);
-        invokeMapper.updateByPrimaryKeySelective(invoke);
-        return new JSONObject();
+
     }
 
     private String sendAndCreateOrder(String action, SigVo sigVo, Integer tokenId, String authId, String dataId, String name, String desc,

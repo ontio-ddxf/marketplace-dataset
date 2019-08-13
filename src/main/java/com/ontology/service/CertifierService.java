@@ -1,5 +1,6 @@
 package com.ontology.service;
 
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.MessageDto;
 import com.ontology.entity.Certifier;
 
@@ -11,7 +12,7 @@ public interface CertifierService {
 
     Map<String, Object> getMessage(String id);
 
-    Map<String, Object> callback(String action, MessageDto req);
+    Result callback(String action, MessageDto req);
 
     String certificateResult(String action, String id);
 
