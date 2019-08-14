@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.ontio.core.transaction.Transaction;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.ContractVo;
 import com.ontology.controller.vo.MessageDto;
 import com.ontology.controller.vo.OnsLoginDto;
@@ -110,7 +111,7 @@ public class OnsServiceImpl implements OnsService {
     }
 
     @Override
-    public JSONObject invokeResult(String action, TransactionDto req) throws Exception {
+    public Result invokeResult(String action, TransactionDto req) throws Exception {
         Ons ons = onsMapper.selectByPrimaryKey(req.getId());
         if (ons == null) {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
@@ -149,7 +150,7 @@ public class OnsServiceImpl implements OnsService {
                     }
                 }
             });
-            return new JSONObject();
+            return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), "SUCCESS");
         } catch (Exception e) {
             log.error("catch exception",e);
             ons.setSuccess(0);

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 import com.ontology.entity.Invoke;
 import com.ontology.exception.MarketplaceException;
@@ -483,7 +484,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public JSONObject invokeAuth(String action, TransactionDto req) throws Exception {
+    public Result invokeAuth(String action, TransactionDto req) throws Exception {
         Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
         if (invoke == null) {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
@@ -506,7 +507,7 @@ public class OrderServiceImpl implements OrderService {
             invoke.setSuccess(1);
             invokeMapper.updateByPrimaryKeySelective(invoke);
 
-            return new JSONObject();
+            return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), "SUCCESS");
         } catch (Exception e) {
             log.error("catch error:",e);
             invoke.setSuccess(2);
@@ -584,7 +585,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public JSONObject invokePurchase(String action, TransactionDto req) {
+    public Result invokePurchase(String action, TransactionDto req) {
         Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
         if (invoke == null) {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
@@ -627,7 +628,7 @@ public class OrderServiceImpl implements OrderService {
             ElasticsearchUtil.addData(orderMap, Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER);
             invoke.setSuccess(1);
             invokeMapper.updateByPrimaryKeySelective(invoke);
-            return new JSONObject();
+            return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), "SUCCESS");
         } catch (Exception e) {
             log.error("catch exception:", e);
             // 下单失败手动回滚商品数量

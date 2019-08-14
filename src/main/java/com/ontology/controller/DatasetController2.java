@@ -169,7 +169,7 @@ public class DatasetController2 {
 
     @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
     @PostMapping("/dataId/invoke")
-    public JSONObject invokeResult(@RequestBody MultiTransactionDto req) throws Exception {
+    public Result invokeResult(@RequestBody MultiTransactionDto req) throws Exception {
         String action = "invoke";
         return datasetService.invokeResult(action,req);
     }

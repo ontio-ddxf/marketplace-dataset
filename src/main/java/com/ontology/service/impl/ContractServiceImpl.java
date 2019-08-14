@@ -2,6 +2,7 @@ package com.ontology.service.impl;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 import com.ontology.entity.Invoke;
 import com.ontology.exception.MarketplaceException;
@@ -93,7 +94,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public JSONObject invoke(String action, TransactionDto req) throws Exception {
+    public Result invoke(String action, TransactionDto req) throws Exception {
         Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
         if (invoke == null) {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
@@ -112,7 +113,7 @@ public class ContractServiceImpl implements ContractService {
             invoke.setSuccess(1);
             invokeMapper.updateByPrimaryKeySelective(invoke);
 
-            return new JSONObject();
+            return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), "SUCCESS");
         } catch (Exception e) {
             log.error("catch error:", e);
             invoke.setSuccess(2);

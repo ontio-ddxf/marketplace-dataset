@@ -42,7 +42,7 @@ public class OrderController {
 
     @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
     @PostMapping("/invoke/auth")
-    public JSONObject invokeAuth(@RequestBody TransactionDto req) throws Exception {
+    public Result invokeAuth(@RequestBody TransactionDto req) throws Exception {
         String action = "invoke";
         return orderService.invokeAuth(action,req);
     }
@@ -89,7 +89,7 @@ public class OrderController {
 
     @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
     @PostMapping("/invoke/purchase")
-    public JSONObject invokeResult(@RequestBody TransactionDto req) throws Exception {
+    public Result invokeResult(@RequestBody TransactionDto req) throws Exception {
         String action = "invokePurchase";
         return orderService.invokePurchase(action,req);
     }

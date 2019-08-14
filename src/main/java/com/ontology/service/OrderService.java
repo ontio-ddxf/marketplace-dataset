@@ -3,6 +3,7 @@ package com.ontology.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.EsPage;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 
 import java.util.Map;
@@ -31,10 +32,10 @@ public interface OrderService {
 
     Map<String, Object> authOrder(String action, OrderVo req) throws Exception;
 
-    JSONObject invokeAuth(String action, TransactionDto req) throws Exception;
+    Result invokeAuth(String action, TransactionDto req) throws Exception;
 
     Map<String, Object> purchaseOrder(String action, PurchaseVo req) throws Exception;
 
-    JSONObject invokePurchase(String action, TransactionDto req);
+    Result invokePurchase(String action, TransactionDto req);
 
 }

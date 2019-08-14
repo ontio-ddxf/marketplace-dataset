@@ -2,6 +2,7 @@ package com.ontology.service;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.MessageDto;
 import com.ontology.controller.vo.OnsLoginDto;
 import com.ontology.controller.vo.TransactionDto;
@@ -16,7 +17,7 @@ public interface OnsService {
 
     JSONObject getParams(String action, String id);
 
-    JSONObject invokeResult(String action, TransactionDto req) throws Exception;
+    Result invokeResult(String action, TransactionDto req) throws Exception;
 
     String registerResult(String action, String id);
 

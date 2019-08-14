@@ -2,6 +2,7 @@ package com.ontology.service;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface ContractService {
 
     Map makeTransactionAndCallback(String action, ContractVo contractVo) throws Exception;
 
-    JSONObject invoke(String action, TransactionDto req) throws Exception;
+    Result invoke(String action, TransactionDto req) throws Exception;
 
     void postHonor(String action, HonorVo req) throws Exception;
 

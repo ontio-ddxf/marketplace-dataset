@@ -3,6 +3,7 @@ package com.ontology.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 import com.ontology.entity.Invoke;
 import com.ontology.exception.MarketplaceException;
@@ -78,7 +79,7 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
-    public JSONObject invokeResult(String action, MultiTransactionDto req) throws Exception {
+    public Result invokeResult(String action, MultiTransactionDto req) throws Exception {
         Invoke invoke = invokeMapper.selectByPrimaryKey(req.getId());
         if (invoke == null) {
             throw new MarketplaceException(action, ErrorInfo.NOT_EXIST.descCN(), ErrorInfo.NOT_EXIST.descEN(), ErrorInfo.NOT_EXIST.code());
@@ -114,7 +115,7 @@ public class DatasetServiceImpl implements DatasetService {
 
             invoke.setSuccess(1);
             invokeMapper.updateByPrimaryKeySelective(invoke);
-            return new JSONObject();
+            return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), "SUCCESS");
         } catch (Exception e) {
             log.error("catch error:",e);
             invoke.setSuccess(2);
