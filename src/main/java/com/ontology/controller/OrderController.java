@@ -89,7 +89,7 @@ public class OrderController {
 
     @ApiOperation(value = "回调返回交易签名数据并发送交易", notes = "回调返回交易签名数据并发送交易", httpMethod = "POST")
     @PostMapping("/invoke/purchase")
-    public Result invokeResult(@RequestBody TransactionDto req) throws Exception {
+    public Result invokePurchase(@RequestBody TransactionDto req) throws Exception {
         String action = "invokePurchase";
         return orderService.invokePurchase(action,req);
     }

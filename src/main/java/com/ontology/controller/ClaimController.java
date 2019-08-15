@@ -53,7 +53,7 @@ public class ClaimController {
     @ApiOperation(value = "回调授权", notes = "回调授权", httpMethod = "POST")
     @PostMapping("/postClaim/callback/{id}")
     public Result postClaimCallBack(@PathVariable String id,@RequestBody TransactionDto req) {
-        String action = "registerResult";
+        String action = "postClaim";
         Map<String, Object> result = claimService.postClaimCallBack(id,req);
         return new Result(action, ErrorInfo.SUCCESS.code(), ErrorInfo.SUCCESS.descEN(), result);
     }

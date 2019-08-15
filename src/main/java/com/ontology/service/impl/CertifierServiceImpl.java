@@ -37,7 +37,8 @@ public class CertifierServiceImpl implements CertifierService {
     @Override
     public Map<String, Object> getMessage(String id) {
         String uuid = UUID.randomUUID().toString();
-        String message = "certificate "+id;
+        uuid = uuid.substring(0, uuid.indexOf("-"));
+        String message = "cert";
 
         Invoke invoke = new Invoke();
         invoke.setId(uuid);
@@ -46,7 +47,8 @@ public class CertifierServiceImpl implements CertifierService {
         invoke.setSuccess(0);
         invokeMapper.insert(invoke);
 
-        String callback = String.format(configParam.CALLBACK_URL,"api/v1/certifier/callback");
+//        String callback = String.format(configParam.CALLBACK_URL,"api/v1/certifier/callback");
+        String callback = String.format(configParam.CALLBACK_URL,"back/cert");
         Map<String, Object> map = new HashMap<>();
         map.put("id", uuid);
         map.put("message", message);

@@ -45,6 +45,7 @@ public class ClaimServiceImpl implements ClaimService {
     @Override
     public Map<String, Object> getClaim() {
         String id = UUID.randomUUID().toString();
+        id = id.substring(0, id.indexOf("-"));
         String message = "helloWorld";
 
         Invoke invoke = new Invoke();
@@ -53,7 +54,8 @@ public class ClaimServiceImpl implements ClaimService {
         invoke.setParams(message);
         invokeMapper.insert(invoke);
 
-        String callback = String.format(configParam.CALLBACK_URL,"api/v1/claim/getClaim/callback");
+//        String callback = String.format(configParam.CALLBACK_URL,"api/v1/claim/getClaim/callback");
+        String callback = String.format(configParam.CALLBACK_URL,"back/getClaim");
         long  expire = (long) (new Date().getTime() + oneYear)/1000L;
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
@@ -81,9 +83,10 @@ public class ClaimServiceImpl implements ClaimService {
     @Override
     public Map<String, Object> postClaim() {
         String id = UUID.randomUUID().toString();
-
-        String callback = String.format(configParam.CALLBACK_URL,"api/v1/claim/postClaim/callback/");
-        long  expire = (long) (new Date().getTime() + oneYear)/1000L;
+        id = id.substring(0, id.indexOf("-"));
+//        String callback = String.format(configParam.CALLBACK_URL,"api/v1/claim/postClaim/callback/");
+        String callback = String.format(configParam.CALLBACK_URL,"back/postClaim/");
+        long  expire = (new Date().getTime() + oneYear)/1000L;
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
         map.put("expire", expire);

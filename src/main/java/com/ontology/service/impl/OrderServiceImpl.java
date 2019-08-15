@@ -454,7 +454,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Map<String, Object> authOrder(String action, OrderVo req) throws Exception {
         String uuid = UUID.randomUUID().toString();
-
+        uuid = uuid.substring(0, uuid.indexOf("-"));
         Map<String, Object> map = new HashMap<>();
         map.put("id", req.getId());
         map.put("state", "2");
@@ -463,7 +463,8 @@ public class OrderServiceImpl implements OrderService {
         map.put("amount", req.getAmount());
         map.put("judger", JSON.toJSONString(req.getOjList()));
 
-        String callback = String.format(configParam.CALLBACK_URL, "api/v1/order/invoke/auth");
+//        String callback = String.format(configParam.CALLBACK_URL, "api/v1/order/invoke/auth");
+        String callback = String.format(configParam.CALLBACK_URL, "back/auth");
 
         ContractVo contractVo = req.getContractVo();
 
@@ -520,7 +521,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Map<String, Object> purchaseOrder(String action, PurchaseVo req) throws Exception {
         String uuid = UUID.randomUUID().toString();
-
+        uuid = uuid.substring(0, uuid.indexOf("-"));
         String id = req.getId();
         String demander = req.getDemanderOntid();
         String demanderAddress = req.getDemanderAddress();
@@ -563,7 +564,8 @@ public class OrderServiceImpl implements OrderService {
             order.put("column" + i, keywords.get(i));
         }
 
-        String callback = String.format(configParam.CALLBACK_URL, "api/v1/order/invoke/purchase");
+//        String callback = String.format(configParam.CALLBACK_URL, "api/v1/order/invoke/purchase");
+        String callback = String.format(configParam.CALLBACK_URL, "back/purchase");
 
         ContractVo contractVo = req.getContractVo();
 

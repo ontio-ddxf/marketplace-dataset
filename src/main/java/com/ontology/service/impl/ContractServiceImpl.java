@@ -78,8 +78,10 @@ public class ContractServiceImpl implements ContractService {
     @Override
     public Map makeTransactionAndCallback(String action, ContractVo contractVo) throws Exception {
         String uuid = UUID.randomUUID().toString();
+        uuid = uuid.substring(0, uuid.indexOf("-"));
         String txHex = makeTransaction(action, contractVo);
-        String callback = String.format(configParam.CALLBACK_URL, "api/v1/contract/invoke");
+//        String callback = String.format(configParam.CALLBACK_URL, "api/v1/contract/invoke");
+        String callback = String.format(configParam.CALLBACK_URL, "back/invoke");
         Invoke invoke = new Invoke();
         invoke.setId(uuid);
         invoke.setSuccess(0);

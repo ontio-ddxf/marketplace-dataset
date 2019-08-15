@@ -36,6 +36,7 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     public Map<String, Object> registerDataIdAndPost(String action, AuthVo req) throws Exception {
         String uuid = UUID.randomUUID().toString();
+        uuid = uuid.substring(0, uuid.indexOf("-"));
         List<String> txHexList = new ArrayList<>();
         // 注册DataId
         DataIdVo dataIdVo = req.getDataIdVo();
@@ -62,7 +63,8 @@ public class DatasetServiceImpl implements DatasetService {
 
         txHexList.add(authOrderTxHex);
 
-        String callback = String.format(configParam.CALLBACK_URL, "api/v1/dataset/dataId/invoke");
+//        String callback = String.format(configParam.CALLBACK_URL, "api/v1/dataset/dataId/invoke");
+        String callback = String.format(configParam.CALLBACK_URL, "back/dataId");
 
         Invoke invoke = new Invoke();
         invoke.setId(uuid);

@@ -50,8 +50,8 @@ public class OnsServiceImpl implements OnsService {
 
     @Override
     public Map<String,Object> registerOns(String action, String ons) throws Exception {
-
         String id = UUID.randomUUID().toString();
+        id = id.substring(0, id.indexOf("-"));
         Ons exist = new Ons();
         exist.setDomain(ons);
         exist.setSuccess(1);
@@ -78,7 +78,8 @@ public class OnsServiceImpl implements OnsService {
         args.add(arg2);
         args.add(arg3);
 
-        String callback = String.format(configParam.CALLBACK_URL, "api/v1/ons/invoke");
+//        String callback = String.format(configParam.CALLBACK_URL, "api/v1/ons/invoke");
+        String callback = String.format(configParam.CALLBACK_URL, "back/reg");
 
         String params = Helper.getParams("signTransaction", id, configParam.CONTRACT_HASH_ONS,
                 "registerDomain", args, "ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR", callback, true);
@@ -193,9 +194,11 @@ public class OnsServiceImpl implements OnsService {
     @Override
     public Map<String, Object> loginOns() {
         String id = UUID.randomUUID().toString();
-        String message = "hello " + System.currentTimeMillis();
+        id = id.substring(0, id.indexOf("-"));
+        String message = "login";
 
-        String callback = String.format(configParam.CALLBACK_URL,"api/v1/ons/login/callback");
+//        String callback = String.format(configParam.CALLBACK_URL,"api/v1/ons/login/callback");
+        String callback = String.format(configParam.CALLBACK_URL,"back/login");
         String domainListUrl = String.format(configParam.CALLBACK_URL,"api/v1/ons/list");
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
