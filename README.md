@@ -34,6 +34,7 @@
 	* 7.2. [回调返回交易签名数据并发送交易](#回调返回交易签名数据并发送交易)
 	* 7.3. [查询交易是否成功](#查询交易是否成功)
 	* 7.4. [给账户创建荣誉值](#给账户创建荣誉值)
+	* 7.5. [查询账户荣誉值](#查询账户荣誉值)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -1347,4 +1348,35 @@ method：POST
 | error | int | 错误码 |
 | desc | String | 成功为SUCCESS，失败为错误描述 |
 | result | List | 成功返回"SUCCESS"，失败返回"" |
+| version   | String | 版本号                        |
+
+
+###  查询账户荣誉值
+```
+url：/api/v1/contract/honor/value/{ontid}
+method：GET
+```
+请求：
+
+| Field Name | Type | Description |
+|---|---|---|
+|ontid|String|用户账户|
+
+响应：
+
+```source-json
+{
+	"action": "queryHonorValue",
+	"error": 0,
+	"desc": "SUCCESS",
+	"result": 100000000000000000,
+	"version": "v1"
+}
+```
+| Field Name | Type | Description |
+| :-- | :-- | :-- |
+| action | String | 动作标志 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回账户荣誉值数量 |
 | version   | String | 版本号                        |

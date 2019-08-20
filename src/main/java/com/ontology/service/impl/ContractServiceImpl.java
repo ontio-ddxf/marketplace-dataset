@@ -12,7 +12,9 @@ import com.ontology.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -130,8 +132,11 @@ public class ContractServiceImpl implements ContractService {
         String ontid = req.getOntid();
         int value = req.getValue();
 
+        if (value > 10000) {
+            throw new MarketplaceException(action, ErrorInfo.PARAM_ERROR.descCN(), ErrorInfo.PARAM_ERROR.descEN(), ErrorInfo.PARAM_ERROR.code());
+        }
+
         Matcher matcher = ConstantParam.ONTID_PATTERN.matcher(ontid);
-        matcher.matches();
         if (!matcher.matches()) {
             throw new MarketplaceException(action, ErrorInfo.IDENTITY_VERIFY_FAILED.descCN(), ErrorInfo.IDENTITY_VERIFY_FAILED.descEN(), ErrorInfo.IDENTITY_VERIFY_FAILED.code());
         }
@@ -152,5 +157,28 @@ public class ContractServiceImpl implements ContractService {
         String params = Helper.getParams(ontid, configParam.CONTRACT_HASH_OBP, "transfer", argList, "ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR");
 
         sdk.invokeContract(params, configParam.ONS_OWNER, false);
+    }
+
+    @Override
+    public Long queryHonor(String action, String ontid) throws Exception {
+        Map<String, Object> arg0 = new HashMap<>();
+        arg0.put("name", "account");
+        arg0.put("value", "Address:" + ontid.substring(8));
+
+        List<Map<String, Object>> argList = new ArrayList<>();
+        argList.add(arg0);
+
+        String params = Helper.getParams(ontid, configParam.CONTRACT_HASH_OBP, "balanceOf", argList, "ARCESVnP8Lbf6S7FuTei3smA35EQYog4LR");
+
+        JSONObject jsonObject = (JSONObject) sdk.invokeContract(params, configParam.ONS_OWNER, true);
+
+        log.info("honor balance result:{}", jsonObject);
+        String result = jsonObject.getString("Result");
+        if (StringUtils.isEmpty(result)) {
+            return 0L;
+        }
+        String reverse = com.github.ontio.common.Helper.reverse(result);
+        Long value = Long.valueOf(reverse, 16);
+        return value;
     }
 }

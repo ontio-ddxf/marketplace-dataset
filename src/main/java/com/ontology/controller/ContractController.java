@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Slf4j
@@ -79,5 +80,13 @@ public class ContractController {
         String action = "postHonor";
         contractService.postHonor(action, req);
         return new Result(action, 0, "SUCCESS", "SUCCESS");
+    }
+
+    @ApiOperation(value = "查询ontid的荣誉值数量", notes = "查询ontid的荣誉值数量", httpMethod = "GET")
+    @GetMapping("/honor/value/{ontid}")
+    public Result queryHonor(@PathVariable String ontid) throws Exception {
+        String action = "queryHonorValue";
+        Long value = contractService.queryHonor(action, ontid);
+        return new Result(action, 0, "SUCCESS", value);
     }
 }

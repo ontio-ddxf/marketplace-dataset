@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.ontology.bean.Result;
 import com.ontology.controller.vo.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -25,5 +26,7 @@ public interface ContractService {
     Result invoke(String action, TransactionDto req) throws Exception;
 
     void postHonor(String action, HonorVo req) throws Exception;
+
+    Long queryHonor(String action, String ontid) throws Exception;
 
 }
