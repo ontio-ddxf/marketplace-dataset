@@ -218,7 +218,7 @@ public class OnsServiceImpl implements OnsService {
         msg.setId(id);
         msg.setOntid(user);
         msg.setDomain(domain);
-        msg.setMessage(req.getParams().getMessage());
+        msg.setMessage(JSON.toJSONString(req.getParams()));
         msg.setIsVerified(1);
         loginMapper.insert(msg);
 

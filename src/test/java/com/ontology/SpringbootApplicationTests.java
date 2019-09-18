@@ -119,6 +119,15 @@ public class SpringbootApplicationTests {
 	}
 
 	@Test
+	public void sendTransaction() throws Exception {
+		SigVo sigVo = new SigVo();
+		sigVo.setSigData("01c280bdfc3353b385013e9478764aabd7a3b67f280cd02163b92c9c68725e5d796fb189fb9788edeb38d14d987e3bf8eaea52871d1e91b41ce83925a23d7c84e4");
+		sigVo.setPubKeys("03b8a3156d16896976827d257444a6cd305e864bc83c6351e57cbaa64f29ef7d08");
+		sigVo.setTxHex("00d18d70320cf401000000000000409c000000000000675478ea7368fd9579c00a8a749d29c2b82f2aef6101ff01012a6469643a6f6e743a4150653479543542364b6e7652374c656e6b5a4436655147684735325172646a756f0b6c7266632e6f6e2e6f6e7454c10e7265676973746572446f6d61696e678f8dba5f2a6974f800bea817b1f1828647ab11b60000");
+		sdkUtil.sendTransaction(sigVo);
+	}
+
+	@Test
 	public void testVersion() {
 		GetResponse getResponse = ElasticsearchUtil.searchVersionById(Constant.ES_INDEX_ORDER, Constant.ES_TYPE_ORDER, "3D4DB44F9F44449992CF76CB9B462E5F", null);
 		long version = getResponse.getVersion();

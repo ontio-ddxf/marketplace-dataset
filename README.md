@@ -29,7 +29,10 @@
 	* 5.3. [查询购买是否成功](#查询购买是否成功)
     * 5.4. [查看数据](#查看数据)
     * 5.5. [确认数据](#确认数据)
-* 7. [通用接口接口](#合约调用接口)
+* 6. [授权接口](#授权接口)
+	* 6.1. [获取授权](#获取授权)
+	* 6.2. [验证授权](#验证授权)
+* 7. [通用接口](#通用接口)
 	* 7.1. [构造交易](#构造交易)
 	* 7.2. [回调返回交易签名数据并发送交易](#回调返回交易签名数据并发送交易)
 	* 7.3. [查询交易是否成功](#查询交易是否成功)
@@ -1194,6 +1197,75 @@ method：POST
 }
 ```
 
+## 授权接口
+
+###  获取授权
+```
+url：/api/v1/claim/getClaim
+method：GET
+```
+
+响应：
+
+```source-json
+{
+	"action": "getClaim",
+	"error": 0,
+	"desc": "SUCCESS",
+	"result": {
+		"id": "150b6632",
+		"message": "message",
+		"expire": 1567997163,
+		"callback": "http://18.140.38.161:10334/back/getClaim/150b6632"
+	},
+	"version": "v1"
+}
+```
+| Field Name | Type | Description |
+| action | String | 动作标志 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回内容，失败返回"" |
+| version   | String | 版本号     |
+| id | String | 唯一的标识 |
+| message | String | 信息 |
+| expire | long | 过期时间 |
+| callback | String | 回调地址|
+
+
+###  验证授权
+```
+url：/api/v1/claim/postClaim
+method：GET
+```
+
+响应：
+
+```source-json
+{
+	"action": "postClaim",
+	"error": 0,
+	"desc": "SUCCESS",
+	"result": {
+		"id": "150b6632",
+		"claimTemplate": "claims:yus_chinese_id_authentication",
+		"expire": 1567997163,
+		"callback": "http://18.140.38.161:10334/back/postClaim/150b6632"
+	},
+	"version": "v1"
+}
+```
+| Field Name | Type | Description |
+| action | String | 动作标志 |
+| error | int | 错误码 |
+| desc | String | 成功为SUCCESS，失败为错误描述 |
+| result | List | 成功返回内容，失败返回"" |
+| version   | String | 版本号     |
+| id | String | 唯一的标识 |
+| claimTemplate | String | 认证模板 |
+| expire | long | 过期时间 |
+| callback | String | 回调地址|
+
 ## 通用接口
 
 ###  构造交易
@@ -1275,13 +1347,13 @@ method：POST
 ```
 | Field Name | Type | Description |
 | :-- | :-- | :-- |
-| result | onj | 成功返回{}，失败返回错误信息 |
+| result | obj | 成功返回{}，失败返回错误信息 |
 
 
 ###  查询交易是否成功
 
 ```
-url：/api/v1/certifier/result/{id}
+url：/api/v1/contract/result/{id}
 method：Get
 ```
 

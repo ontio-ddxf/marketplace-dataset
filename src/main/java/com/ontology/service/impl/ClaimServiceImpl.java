@@ -91,6 +91,7 @@ public class ClaimServiceImpl implements ClaimService {
         map.put("id", id);
         map.put("expire", expire);
         map.put("callback", callback+id);
+        map.put("claimTemplate","claims:yus_chinese_id_authentication");
         Invoke invoke = new Invoke();
         invoke.setId(id);
         invoke.setSuccess(0);
